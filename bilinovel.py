@@ -11,8 +11,7 @@ from bs4 import BeautifulSoup  # 用于代替正则式 取源码中相应标签�
 import time  # 时间相关操作
 import os
 from rich.progress import track as tqdm
-# from utils2 import *
-from aaa import *
+from utils import *
 import cv2
 import zipfile
 import shutil
