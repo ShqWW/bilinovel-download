@@ -18,11 +18,12 @@ import shutil
 import numpy as np
 import argparse
 import re
+import pickle
 
 def parse_args():
     """Parse input arguments."""
     parser = argparse.ArgumentParser(description='config')
-    parser.add_argument('--book_no', default='3765', type=str)
+    parser.add_argument('--book_no', default='2939', type=str)
     parser.add_argument('--volumn_no', default='1', type=int)
     args = parser.parse_args()
     return args
@@ -46,12 +47,11 @@ class Editer(object):
         self.title = bf.find('h2', {"class": "book-title"}).text
         self.author = bf.find('a').text
 
-        self.img_url_map = {}
-        self.num_img = 0
+        self.img_url_map = dict()
         self.volume_no = volume_no
 
         self.root_path = root_path
-        self.temp_path = os.path.join(self.root_path,  'temp')
+        self.temp_path = os.path.join(self.root_path,  'temp_'+ self.title + '_' + str(self.volume_no))
         os.makedirs(self.temp_path, exist_ok=True)
         self.epub_path = os.path.join(self.root_path,  'epub')
         os.makedirs(self.epub_path, exist_ok=True)
@@ -66,21 +66,26 @@ class Editer(object):
     获取html文档内容
     """
     def get_html(self, url, is_gbk=False):
-        # 设置一个超时时间 取随机数 是为了防止网站被认定为爬虫，不用修改
-        timeout = random.choice(range(80, 180))
-
         while True:
             try:
                 req = requests.get(url=url, headers=self.header)
                 if is_gbk:
                     req.encoding = 'GBK'       #这里是网页的编码转换，根据网页的实际需要进行修改，经测试这个编码没有问题
-                # else:
-                #     req.decode('utf-8')
                 break
             except Exception as e:
                 print('3', e)
                 time.sleep(random.choice(range(5, 10)))
         return req.text
+    
+    def get_html_img(self, url):
+        while True:
+            try:
+                req=requests.get(url, headers=self.header, timeout=5)
+                break
+            except Exception as e:
+                print('3', e)
+                time.sleep(random.choice(range(5, 10)))
+        return req.content
     
     def get_index_url(self):
         cata_html = self.get_html(self.cata_page, is_gbk=False)
@@ -117,8 +122,7 @@ class Editer(object):
             img_url = re.search(r'src="(.*?)"', img_urlre).group(1).replace('img1', 'img3')
             text = text.replace('<br/>\n' + img_urlre +'\n<br/>', img_urlre)
             if not img_url in self.img_url_map:
-                self.img_url_map[img_url] = str(self.num_img).zfill(2)
-                self.num_img += 1
+                self.img_url_map[img_url] = str(len(self.img_url_map)).zfill(2)
             ################################图片名占位符, 没有换行情况下加入换行，独自占用一行
             img_symbol = f'[img:{self.img_url_map[img_url]}]'
             text = text.replace(img_urlre, img_symbol)
@@ -160,13 +164,29 @@ class Editer(object):
             with open(textfile, 'w+', encoding='utf-8') as f:
                 f.writelines(text_html)
 
+    def buffer(self, volume):
+        filename = 'buffer.pkl'
+        filepath = os.path.join(self.temp_path, filename)
+        if os.path.isfile(filepath):
+            with open(filepath, 'rb') as f:
+                volume, self.img_url_map = pickle.load(f)
+        else:
+            with open(filepath, 'wb') as f:
+                pickle.dump((volume ,self.img_url_map), f)
+        return volume
+    
+    def is_buffer(self):
+        filename = 'buffer.pkl'
+        filepath = os.path.join(self.temp_path, filename)
+        return os.path.isfile(filepath)
+
     def get_image(self):
         img_path = self.img_path
         for img_url, img_name in tqdm(self.img_url_map.items()):
-            print(img_url)
-            r=requests.get(img_url, headers=self.header)
+            # print(img_url)
+            content = self.get_html_img(img_url)
             with open(img_path+f'/{img_name}.jpg', 'wb') as f:
-                f.write(r.content) #写入二进制内容
+                f.write(content) #写入二进制内容
 
     def get_cover(self):
         textfile = os.path.join(self.text_path, 'cover.xhtml')
@@ -231,11 +251,13 @@ if __name__=='__main__':
     volume = editer.get_index_url()
     # volume['chap_urls'][0] = 'https://w.linovelib.com/novel/1861/67966.html'
     # print(volume)
-
-    print('正在下载文本....')
-    editer.get_text(volume)
-
-    print(editer.img_url_map)
+    if not editer.is_buffer():
+        print('正在下载文本....')
+        editer.get_text(volume)
+        editer.buffer(volume)
+    else:
+        print('检测到文本文件，直接下载插图')
+        volume = editer.buffer(volume)
 
     print('正在下载插图....')
     editer.get_image()
