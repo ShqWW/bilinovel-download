@@ -24,7 +24,7 @@ def parse_args():
     """Parse input arguments."""
     parser = argparse.ArgumentParser(description='config')
     parser.add_argument('--book_no', default='2939', type=str)
-    parser.add_argument('--volumn_no', default='1', type=int)
+    parser.add_argument('--volumn_no', default='3', type=int)
     args = parser.parse_args()
     return args
 
@@ -35,11 +35,9 @@ class Editer(object):
         # 设置headers是为了模拟浏览器访问 否则的话可能会被拒绝 可通过浏览器获取，这里不用修改
         self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': "https://w.linovelib.com/"}
 
-        # self.main_page = 'https://www.wenku8.net/book/'+ book_no +'.htm'
         self.main_page = f'https://w.linovelib.com/novel/{book_no}.html'
         self.cata_page = f'https://w.linovelib.com/novel/{book_no}/catalog'
         self.url_head = 'https://w.linovelib.com'
-        # print(self.main_page, self.cata_page)
 
         main_html = self.get_html(self.main_page)
         bf = BeautifulSoup(main_html, 'html.parser')
@@ -125,10 +123,13 @@ class Editer(object):
                 self.img_url_map[img_url] = str(len(self.img_url_map)).zfill(2)
             ################################图片名占位符, 没有换行情况下加入换行，独自占用一行
             img_symbol = f'[img:{self.img_url_map[img_url]}]'
-            text = text.replace(img_urlre, img_symbol)
-            symbol_index = text.index(img_symbol)
-            if text[symbol_index-1] != '\n':
-               text = text[:symbol_index] + '\n' + text[symbol_index:]
+            if '00' in img_symbol:
+                text = text.replace(img_urlre, '')
+            else:
+                text = text.replace(img_urlre, img_symbol)
+                symbol_index = text.index(img_symbol)
+                if text[symbol_index-1] != '\n':
+                    text = text[:symbol_index] + '\n' + text[symbol_index:]
         bf = BeautifulSoup(text, 'html.parser')
         text = bf.find('div', {'id': 'acontent'}).text[:-1]
         text = restore_chars(text)
@@ -201,8 +202,6 @@ class Editer(object):
         with open(textfile, 'w+', encoding='utf-8') as f:
             f.writelines(img_htmls)
 
-
-
     def get_toc(self, volume):
         toc_htmls = get_toc_html(self.title, volume["chap_names"])
         textfile = self.temp_path + '/OEBPS/toc.ncx'
@@ -217,7 +216,6 @@ class Editer(object):
         with open(textfile, 'w+', encoding='utf-8') as f:
             f.writelines(content_htmls)
 
-
     def get_epub_head(self):
         mimetype = 'application/epub+zip'
         mimetypefile = self.temp_path + '/mimetype'
@@ -231,6 +229,7 @@ class Editer(object):
             f.writelines(container_htmls)
 
     def get_epub(self):
+        os.remove(os.path.join(self.temp_path, 'buffer.pkl'))
         epub_file = self.epub_path + '/' + self.title + '-' + volume['name'] + '.epub'
         with zipfile.ZipFile(epub_file, "w", zipfile.ZIP_DEFLATED) as zf:
             for dirpath, dirnames, filenames in os.walk(self.temp_path):
@@ -240,7 +239,18 @@ class Editer(object):
                     zf.write(os.path.join(dirpath, filename), fpath+filename)
         shutil.rmtree(self.temp_path)
         return epub_file
-
+    
+    def check_volume(self, volume):
+        error_nos = []
+        if 'javascript' in volume['img_url'] or 'cid' in volume['img_url']:
+            volume['img_url'] = input(f'章节\"插图\"连接有误，请手动输入该章节链接:')
+        for url_no, url in enumerate(volume['chap_urls']):
+            if 'javascript' in url or 'cid' in url:
+                error_nos.append(url_no)
+        chap_names = volume['chap_names']
+        for url_no in error_nos:
+            volume['chap_urls'][url_no] = input(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接:')
+        return volume
 
 if __name__=='__main__':
     args = parse_args()
@@ -249,10 +259,11 @@ if __name__=='__main__':
 
     print('正在获取书籍信息....')
     volume = editer.get_index_url()
-    # volume['chap_urls'][0] = 'https://w.linovelib.com/novel/1861/67966.html'
-    # print(volume)
+    print(editer.title + '-' + volume['name'], editer.author)
+
     if not editer.is_buffer():
         print('正在下载文本....')
+        volume = editer.check_volume(volume)
         editer.get_text(volume)
         editer.buffer(volume)
     else:
@@ -262,7 +273,6 @@ if __name__=='__main__':
     print('正在下载插图....')
     editer.get_image()
     
-
     print('正在编辑元数据....')
     editer.get_cover()
     editer.get_toc(volume)
