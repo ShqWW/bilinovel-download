@@ -19,12 +19,13 @@ import numpy as np
 import argparse
 import re
 import pickle
+import sys
 
 def parse_args():
     """Parse input arguments."""
     parser = argparse.ArgumentParser(description='config')
-    parser.add_argument('--book_no', default='2939', type=str)
-    parser.add_argument('--volumn_no', default='4', type=int)
+    parser.add_argument('--book_no', default='2650', type=str)
+    parser.add_argument('--volumn_no', default='2', type=int)
     args = parser.parse_args()
     return args
 
@@ -81,8 +82,8 @@ class Editer(object):
                 req=requests.get(url, headers=self.header, timeout=5)
                 break
             except Exception as e:
-                print('3', e)
-                time.sleep(random.choice(range(5, 10)))
+                # print('3', e)
+                pass
         return req.content
     
     def get_index_url(self):
@@ -135,22 +136,33 @@ class Editer(object):
         text = restore_chars(text)
         return text
     
-    def get_chap_text(self, url):
+    def get_chap_text(self, url, chap_name):
         chap_no = url.split('/')[-1].strip('.html')
         text_chap = ''
+        page_no = 0 
         while chap_no in url:
-            print(url)
+            if page_no == 0:
+                str_out = chap_name
+            else:
+                str_out = '\r' + chap_name + f' 正在下载第{page_no + 1}页......'
+            sys.stdout.write(str_out) 
+            sys.stdout.flush()
             content_html = self.get_html(url, is_gbk=False)
             text = self.get_page_text(content_html)
             text_chap += text
-            url = self.url_head + re.search(r'nextpage="(.*?)"', content_html).group(1) 
+            url = self.url_head + re.search(r'nextpage="(.*?)"', content_html).group(1)
+            page_no += 1
+        sys.stdout.write('\r' + '\033[2K') 
+        sys.stdout.flush()
+        print(chap_name)
         return text_chap
     
     def get_text(self, volume):
+        print('****************************')
         img_url = volume['img_url']
         img_chap_name = '彩插'
         if img_url != '':
-            text = self.get_chap_text(img_url)
+            text = self.get_chap_text(img_url, '彩页')
             text_html = text2htmls(img_chap_name, text)
             textfile = self.text_path + '/color.xhtml'
             with open(textfile, 'w+', encoding='utf-8') as f:
@@ -158,12 +170,13 @@ class Editer(object):
 
         chap_names, chap_urls = volume['chap_names'], volume['chap_urls']
         for chap_no, (chap_name, chap_url) in enumerate(zip(chap_names, chap_urls)):
-            print(chap_name)
-            text = self.get_chap_text(chap_url)
+            # print(chap_name, end='   ')
+            text = self.get_chap_text(chap_url, chap_name)
             text_html = text2htmls(chap_name, text) 
             textfile = self.text_path + f'/{str(chap_no).zfill(2)}.xhtml'
             with open(textfile, 'w+', encoding='utf-8') as f:
                 f.writelines(text_html)
+        print('****************************')
 
     def buffer(self, volume):
         filename = 'buffer.pkl'
@@ -197,7 +210,7 @@ class Editer(object):
             img = cv2.imread(imgfile)
             img_w, img_h = img.shape[1], img.shape[0]
         except:
-            pass
+            print('没有封面图片，请自行用第三方EPUB编辑器手动添加封面')
         img_htmls = get_cover_html(img_w, img_h)
         with open(textfile, 'w+', encoding='utf-8') as f:
             f.writelines(img_htmls)
@@ -249,18 +262,19 @@ class Editer(object):
                 error_nos.append(url_no)
         chap_names = volume['chap_names']
         for url_no in error_nos:
-            volume['chap_urls'][url_no] = input(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接:')
+            volume['chap_urls'][url_no] = input(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“w”开头的链接):')
         return volume
 
 if __name__=='__main__':
+    sys.stdout.write("\033[?25l")
+    sys.stdout.flush()
     args = parse_args()
-    # color_page_num = args.color_page
     editer = Editer(root_path='out', book_no=args.book_no, volume_no=args.volumn_no)
 
     print('正在获取书籍信息....')
     volume = editer.get_index_url()
     print(editer.title + '-' + volume['name'], editer.author)
-
+    print('****************************')
     if not editer.is_buffer():
         print('正在下载文本....')
         volume = editer.check_volume(volume)
@@ -281,5 +295,5 @@ if __name__=='__main__':
 
     print('正在生成电子书....')
     epub_file = editer.get_epub()
-    print('生成成功！', '电子书路径【', epub_file, '】')
+    print('生成成功！', f'电子书路径【{epub_file}】')
     
