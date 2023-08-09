@@ -25,7 +25,7 @@ def parse_args():
     """Parse input arguments."""
     parser = argparse.ArgumentParser(description='config')
     parser.add_argument('--book_no', default='0000', type=str)
-    parser.add_argument('--volumn_no', default='1', type=int)
+    parser.add_argument('--volume_no', default='1', type=int)
     args = parser.parse_args()
     return args
 
@@ -266,10 +266,8 @@ class Editer(object):
         return volume
 
 if __name__=='__main__':
-    sys.stdout.write("\033[?25l")
-    sys.stdout.flush()
     args = parse_args()
-    editer = Editer(root_path='out', book_no=args.book_no, volume_no=args.volumn_no)
+    editer = Editer(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
 
     print('正在获取书籍信息....')
     volume = editer.get_index_url()
