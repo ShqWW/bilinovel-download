@@ -1,0 +1,6 @@
+# pip install -r requirements.txt
+requests
+bs4
+rich
+opencv-python
+# opencv-python-headless # if use wsl on windows
