@@ -24,8 +24,8 @@ import sys
 def parse_args():
     """Parse input arguments."""
     parser = argparse.ArgumentParser(description='config')
-    parser.add_argument('--book_no', default='2650', type=str)
-    parser.add_argument('--volumn_no', default='2', type=int)
+    parser.add_argument('--book_no', default='0000', type=str)
+    parser.add_argument('--volumn_no', default='1', type=int)
     args = parser.parse_args()
     return args
 
