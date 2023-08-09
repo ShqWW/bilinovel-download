@@ -26,6 +26,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='config')
     parser.add_argument('--book_no', default='0000', type=str)
     parser.add_argument('--volume_no', default='1', type=int)
+    parser.add_argument('--no_input', default=False, type=bool)
     args = parser.parse_args()
     return args
 
@@ -267,6 +268,9 @@ class Editer(object):
 
 if __name__=='__main__':
     args = parse_args()
+    if not args.no_input:
+        args.book_no = input('请输入书籍号：')
+        args.volume_no = int(input('请输入卷号：'))
     editer = Editer(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
 
     print('正在获取书籍信息....')
