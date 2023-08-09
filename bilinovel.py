@@ -126,7 +126,7 @@ class Editer(object):
             ################################图片名占位符, 没有换行情况下加入换行，独自占用一行
             img_symbol = f'[img:{self.img_url_map[img_url]}]'
             if '00' in img_symbol:
-                text = text.replace(img_urlre, '')
+                text = text.replace(img_urlre, '')  #默认第一张为封面图片 不写入彩页
             else:
                 text = text.replace(img_urlre, img_symbol)
                 symbol_index = text.index(img_symbol)
@@ -161,14 +161,12 @@ class Editer(object):
     def get_text(self, volume):
         print('****************************')
         img_url = volume['img_url']
+        img_strs, del_index = [], []
         img_chap_name = '彩插'
         if img_url != '':
             text = self.get_chap_text(img_url, '彩页')
-            text_html = text2htmls(img_chap_name, text)
-            textfile = self.text_path + '/color.xhtml'
-            with open(textfile, 'w+', encoding='utf-8') as f:
-                f.writelines(text_html)
-
+            text_html_color = text2htmls(img_chap_name, text)
+            
         chap_names, chap_urls = volume['chap_names'], volume['chap_urls']
         for chap_no, (chap_name, chap_url) in enumerate(zip(chap_names, chap_urls)):
             # print(chap_name, end='   ')
@@ -177,7 +175,28 @@ class Editer(object):
             textfile = self.text_path + f'/{str(chap_no).zfill(2)}.xhtml'
             with open(textfile, 'w+', encoding='utf-8') as f:
                 f.writelines(text_html)
+            for text_line in text_html:
+                img_str = re.search(r"<img(.*?)\/>", text_line)
+                if img_str is not None:
+                    img_strs.append(img_str.group(0))
+
         print('****************************')
+        
+        # 将彩页中后文已经出现的图片删除，避免重复
+        if img_url!='':
+            text_html_color_new = []
+            textfile = self.text_path + '/color.xhtml'
+            for text_line in text_html_color: 
+                is_save = True
+                for img_str in img_strs:
+                    if img_str in text_line:
+                        is_save = False
+                        break
+                if is_save:
+                   text_html_color_new.append(text_line) 
+        
+            with open(textfile, 'w+', encoding='utf-8') as f:
+                f.writelines(text_html_color_new)
 
     def buffer(self, volume):
         filename = 'buffer.pkl'
@@ -248,7 +267,7 @@ class Editer(object):
         with zipfile.ZipFile(epub_file, "w", zipfile.ZIP_DEFLATED) as zf:
             for dirpath, dirnames, filenames in os.walk(self.temp_path):
                 fpath = dirpath.replace(self.temp_path,'') #这一句很重要，不replace的话，就从根目录开始复制
-                fpath = fpath and fpath + os.sep or ''#这句话理解我也点郁闷，实现当前文件夹以及包含的所有文件的压缩
+                fpath = fpath and fpath + os.sep or ''
                 for filename in filenames:
                     zf.write(os.path.join(dirpath, filename), fpath+filename)
         shutil.rmtree(self.temp_path)

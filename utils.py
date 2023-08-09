@@ -85,12 +85,12 @@ def get_content_html(title, author, num_chap, num_img, volume):
     content_htmls.append('  </metadata>\n')
     content_htmls.append('  <manifest>\n')
     content_htmls.append('    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>\n')
+    content_htmls.append('    <item id="cover.xhtml" href="Text/cover.xhtml" media-type="application/xhtml+xml"/>\n')
     if volume['img_url'] != '':
         content_htmls.append('    <item id="xcolor" href="Text/color.xhtml" media-type="application/xhtml+xml"/>\n')
     for chap_no in range(num_chap):
         content_htmls.append('    <item id=\"x'+str(chap_no).zfill(2)+'.xhtml\" href=\"Text/'+ str(chap_no).zfill(2)+'.xhtml\" media-type=\"application/xhtml+xml\"/>\n')
 
-    content_htmls.append('    <item id="cover.xhtml" href="Text/cover.xhtml" media-type="application/xhtml+xml"/>\n')
 
     for img_no in range(num_img):
         content_htmls.append('    <item id=\"x'+str(img_no).zfill(2)+'.jpg\" href=\"Images/'+ str(img_no).zfill(2)+'.jpg\" media-type=\"image/jpeg\"/>\n')
@@ -98,11 +98,12 @@ def get_content_html(title, author, num_chap, num_img, volume):
     content_htmls.append('  </manifest>\n')
     content_htmls.append('  <spine toc="ncx">\n')
 
+
+    content_htmls.append('    <itemref idref="cover.xhtml"/>\n')
     content_htmls.append('    <itemref idref="xcolor"/>\n')
     for chap_no in range(num_chap):
         content_htmls.append('    <itemref idref=\"x'+str(chap_no).zfill(2)+'.xhtml\"/>\n')
 
-    content_htmls.append('    <itemref idref="cover.xhtml"/>\n')
     content_htmls.append('  </spine>\n')
     content_htmls.append('  <guide>\n')
     content_htmls.append('    <reference type="cover" title="封面" href="Text/cover.xhtml"/>\n')
