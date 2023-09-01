@@ -47,7 +47,7 @@ class Editer(object):
         self.title = bf.find('h2', {"class": "book-title"}).text
         self.author = bf.find('a').text
 
-        self.img_url_map = dict()
+        self.img_url_map = dict()###img_url_name:(img_url, epub_no)
         self.volume_no = volume_no
 
         self.root_path = root_path
@@ -120,11 +120,14 @@ class Editer(object):
         img_urlre_list = re.findall(r"<img.*?/>", text)
         for img_urlre in img_urlre_list:
             img_url = re.search(r'src="(.*?)"', img_urlre).group(1).replace('img1', 'img3')
+            img_url_name = re.search(r'.com/(.*?).jpg', text).group(1)
             text = text.replace('<br/>\n' + img_urlre +'\n<br/>', img_urlre)
-            if not img_url in self.img_url_map:
-                self.img_url_map[img_url] = str(len(self.img_url_map)).zfill(2)
+            if not img_url_name in self.img_url_map:
+                self.img_url_map[img_url_name] = (img_url, str(len(self.img_url_map)).zfill(2))
             ################################图片名占位符, 没有换行情况下加入换行，独自占用一行
-            img_symbol = f'[img:{self.img_url_map[img_url]}]'
+            else:
+                img_url = self.img_url_map[img_url_name][0]
+            img_symbol = f'[img:{self.img_url_map[img_url_name][1]}]'
             if '00' in img_symbol:
                 text = text.replace(img_urlre, '')  #默认第一张为封面图片 不写入彩页
             else:
@@ -216,8 +219,7 @@ class Editer(object):
 
     def get_image(self):
         img_path = self.img_path
-        for img_url, img_name in tqdm(self.img_url_map.items()):
-            # print(img_url)
+        for _, (img_url, img_name) in tqdm(self.img_url_map.items()):
             content = self.get_html_img(img_url)
             with open(img_path+f'/{img_name}.jpg', 'wb') as f:
                 f.write(content) #写入二进制内容
