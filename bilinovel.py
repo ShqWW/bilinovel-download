@@ -116,7 +116,7 @@ class Editer(object):
 
     def get_page_text(self, content_html):
         bf = BeautifulSoup(content_html, 'html.parser')
-        text = str(bf.find('div', {'id': 'acontent'}))
+        text = str(bf.find('div', {'id': 'ccacontent'}))
         img_urlre_list = re.findall(r"<img.*?/>", text)
         for img_urlre in img_urlre_list:
             img_url = re.search(r'src="(.*?)"', img_urlre).group(1).replace('img1', 'img3')
@@ -136,7 +136,7 @@ class Editer(object):
                 if text[symbol_index-1] != '\n':
                     text = text[:symbol_index] + '\n' + text[symbol_index:]
         bf = BeautifulSoup(text, 'html.parser')
-        text = bf.find('div', {'id': 'acontent'}).text[:-1]
+        text = bf.find('div', {'id': 'ccacontent'}).text[:-1]
         text = restore_chars(text)
         return text
     
