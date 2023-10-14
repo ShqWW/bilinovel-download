@@ -315,7 +315,7 @@ class Window(FluentWindow):
         super().__init__()
 
         self.out_path = 'C:/Users/haoru/Downloads' 
-        self.welcome_text = '搜索小说请登录哔哩轻小说手机版https://www.bilinovel.com，查询后请根据书籍网址输入书号，并根据需要输入下载的卷号。例如小说网址是https://www.bilinovel.com/novel/2704.html并想下载第二卷，则书号输入2704，卷号输入2。'
+        self.welcome_text = '搜索小说请登录哔哩轻小说手机版https://w.linovelib.com，查询后请根据书籍网址输入书号，并根据需要输入下载的卷号。例如小说网址是https://w.linovelib.com/novel/2704.html，要下载第二卷，则书号输入2704，卷号输入2。'
         self.homeInterface = HomeWidget('Home Interface', self)
         self.settingInterface = SettingWidget('Setting Interface', self)
         self.initNavigation()
