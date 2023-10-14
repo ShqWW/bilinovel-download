@@ -37,8 +37,9 @@ python bilinovel_gui.py
 
 ## 使用pyinstaller打包:
 ```
-pyinstaller -F -w -i .\resource\logo.png --paths=C:\Users\haoru\bilinovel-download .\gui.py --clean
+pyinstaller -F -w -i .\resource\logo.png --paths=C:\Users\haoru\bilinovel-download .\bilinovel_gui.py --clean
 ```
+[release](https://github.com/ShqWW/bilinovel-download/releases/tag/downloader)页面也发布了已经打包好的exe可执行程序(系统最好是win10以上版本)。
 
 ## EPUB书籍编辑和管理读软件推荐：
 1. [Sigil](https://sigil-ebook.com/)
