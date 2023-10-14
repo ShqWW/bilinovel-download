@@ -1,10 +1,10 @@
 
 <div align="center">
-  <img src="resource/logo_big.png" width="300" style="margin-right: 20px;"/> 
+  <img src="resource/logo_big.png" width="300" style="margin-right: 3000px;"/> 
 </div>
 
 <h1 align="center">
-  EPUB下载器
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EPUB下载器
 </h1>
 
 
