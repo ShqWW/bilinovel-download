@@ -4,7 +4,7 @@
 </div>
 
 
-可以下载[哔哩轻小说](https://www.linovelib.com/)网站下面的小说，并转化为EPUB格式，插图目录自动排版，支持各种阅读器。图形界面使用[PyQt-Fluent-Widgets](https://pyqt-fluent-widgets.readthedocs.io/en/latest/index.html)界面编写，fluent design风格，支持亮暗两种主题。
+下载[哔哩轻小说](https://www.linovelib.com/)网站下的小说，并转化为EPUB格式，插图、目录与封面自动排版，支持各种阅读器。图形界面使用[PyQt-Fluent-Widgets](https://pyqt-fluent-widgets.readthedocs.io/en/latest/index.html)界面编写，fluent design风格，支持亮暗两种主题。
 
 界面样例：
 <div align="center">
