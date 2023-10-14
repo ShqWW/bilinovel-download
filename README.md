@@ -1,10 +1,14 @@
-<div style="display: flex; align-items: center; justify-content: center;">
-  <img src="resource/logo_big.png" width="200" style="margin-right: 10px;margin-top: -14px;">
+
+<div align="center">
+  <img src="resource/logo_big.png" width="200"/> 
 </div>
 
-<div style="display: flex; align-items: center; justify-content: center;">
-<p style="font-size: 30px;">EPUB格式下载器</p>
-</div>
+<h1 align="center">
+  EPUB下载器
+</h1>
+
+
+
 
 
 下载[哔哩轻小说](https://www.linovelib.com/)网站下的小说，并转化为EPUB格式，插图、目录与封面自动排版，支持各种阅读器。图形界面使用[PyQt-Fluent-Widgets](https://pyqt-fluent-widgets.readthedocs.io/en/latest/index.html)界面编写，fluent design风格，支持亮暗两种主题。
