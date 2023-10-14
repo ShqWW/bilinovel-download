@@ -1,6 +1,6 @@
-# pip install -r requirements.txt
+# pip install -r requirements.txt -i https://pypi.org/simple/
 requests
 bs4
 rich
-# opencv-python
-opencv-python-headless # if use wsl on windows
+pyqt5
+PyQt-Fluent-Widgets[full]

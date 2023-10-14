@@ -12,14 +12,14 @@ import time  # 时间相关操作
 import os
 from rich.progress import track as tqdm
 from utils import *
-import cv2
 import zipfile
 import shutil
 import numpy as np
 import argparse
 import re
 import pickle
-import sys
+from PIL import Image
+import time
 
 def parse_args():
     """Parse input arguments."""
@@ -40,8 +40,11 @@ class Editer(object):
         self.main_page = f'https://w.linovelib.com/novel/{book_no}.html'
         self.cata_page = f'https://w.linovelib.com/novel/{book_no}/catalog'
         self.url_head = 'https://w.linovelib.com'
+        self.stop_flag = False
 
         main_html = self.get_html(self.main_page)
+        if self.stop_flag:
+            return None
         bf = BeautifulSoup(main_html, 'html.parser')
         bf = bf.find('div', {'id': 'bookDetailWrapper'})
         self.title = bf.find('h2', {"class": "book-title"}).text
@@ -50,11 +53,9 @@ class Editer(object):
         self.img_url_map = dict()###img_url_name:(img_url, epub_no)
         self.volume_no = volume_no
 
-        self.root_path = root_path
-        self.temp_path = os.path.join(self.root_path,  'temp_'+ self.title + '_' + str(self.volume_no))
+        self.epub_path = root_path
+        self.temp_path = os.path.join(self.epub_path,  'temp_'+ self.title + '_' + str(self.volume_no))
         os.makedirs(self.temp_path, exist_ok=True)
-        self.epub_path = os.path.join(self.root_path,  'epub')
-        os.makedirs(self.epub_path, exist_ok=True)
 
         self.text_path = os.path.join(self.temp_path, 'OEBPS/Text')
         os.makedirs(self.text_path, exist_ok=True)
@@ -62,13 +63,17 @@ class Editer(object):
         self.img_path = os.path.join(self.temp_path,  'OEBPS/Images')
         os.makedirs(self.img_path, exist_ok=True)
 
+        
+
     """
     获取html文档内容
     """
     def get_html(self, url, is_gbk=False):
         while True:
+            if self.stop_flag:
+                return None
             try:
-                req = requests.get(url=url, headers=self.header)
+                req = requests.get(url=url, headers=self.header, timeout=5)
                 if is_gbk:
                     req.encoding = 'GBK'       #这里是网页的编码转换，根据网页的实际需要进行修改，经测试这个编码没有问题
                 break
@@ -79,6 +84,8 @@ class Editer(object):
     
     def get_html_img(self, url):
         while True:
+            if self.stop_flag:
+                return None
             try:
                 req=requests.get(url, headers=self.header, timeout=5)
                 break
@@ -89,6 +96,8 @@ class Editer(object):
     
     def get_index_url(self):
         cata_html = self.get_html(self.cata_page, is_gbk=False)
+        if self.stop_flag:
+            return None
         cata_html = restore_chars(cata_html)
         bf = BeautifulSoup(cata_html, 'html.parser')
         chap_html_list = bf.find('ol', {'id': 'volumes'}).find_all('li')
@@ -148,18 +157,17 @@ class Editer(object):
             if page_no == 0:
                 str_out = chap_name
             else:
-                str_out = '\r' + chap_name + f' 正在下载第{page_no + 1}页......'
-            sys.stdout.write(str_out) 
-            sys.stdout.flush()
+                str_out = f'    正在下载第{page_no + 1}页......'
+            print(str_out)
             content_html = self.get_html(url, is_gbk=False)
+            if self.stop_flag:
+                return None
             text = self.get_page_text(content_html)
             text_chap += text
             url = self.url_head + re.search(r'nextpage="(.*?)"', content_html).group(1)
             page_no += 1
-        sys.stdout.write('\r' + '\033[2K') 
-        sys.stdout.flush()
-        print(chap_name)
         return text_chap
+        
     
     def get_text(self, volume):
         print('****************************')
@@ -168,12 +176,16 @@ class Editer(object):
         img_chap_name = '彩插'
         if img_url != '':
             text = self.get_chap_text(img_url, '彩页')
+            if self.stop_flag:
+                return None
             text_html_color = text2htmls(img_chap_name, text)
             
         chap_names, chap_urls = volume['chap_names'], volume['chap_urls']
         for chap_no, (chap_name, chap_url) in enumerate(zip(chap_names, chap_urls)):
             # print(chap_name, end='   ')
             text = self.get_chap_text(chap_url, chap_name)
+            if self.stop_flag:
+                return None
             text_html = text2htmls(chap_name, text) 
             textfile = self.text_path + f'/{str(chap_no).zfill(2)}.xhtml'
             with open(textfile, 'w+', encoding='utf-8') as f:
@@ -217,21 +229,36 @@ class Editer(object):
         filepath = os.path.join(self.temp_path, filename)
         return os.path.isfile(filepath)
 
-    def get_image(self):
+    def get_image(self, is_gui=False, signal=None):
         img_path = self.img_path
-        for _, (img_url, img_name) in tqdm(self.img_url_map.items()):
-            content = self.get_html_img(img_url)
-            with open(img_path+f'/{img_name}.jpg', 'wb') as f:
-                f.write(content) #写入二进制内容
+        if is_gui:
+            len_iter = len(self.img_url_map.items())
+            signal.emit('start')
+            for i, (_, (img_url, img_name)) in enumerate(self.img_url_map.items()):
+                content = self.get_html_img(img_url)
+                if self.stop_flag:
+                    return None
+                with open(img_path+f'/{img_name}.jpg', 'wb') as f:
+                    f.write(content) #写入二进制内容 
+                signal.emit(int(100*(i+1)/len_iter))
+            signal.emit('end')
+        else:
+            for _, (img_url, img_name) in tqdm(self.img_url_map.items()):
+                content = self.get_html_img(img_url)
+                with open(img_path+f'/{img_name}.jpg', 'wb') as f:
+                    f.write(content) #写入二进制内容
 
-    def get_cover(self):
+    def get_cover(self, is_gui=False, signal=None):
         textfile = os.path.join(self.text_path, 'cover.xhtml')
         img_w, img_h = 300, 300
         try:
             imgfile = os.path.join(self.img_path, '00.jpg')
-            img = cv2.imread(imgfile)
-            img_w, img_h = img.shape[1], img.shape[0]
-        except:
+            img = Image.open(imgfile)
+            img_w, img_h = img.size
+            if is_gui:
+                signal.emit(imgfile)
+        except Exception as e:
+            print(e)
             print('没有封面图片，请自行用第三方EPUB编辑器手动添加封面')
         img_htmls = get_cover_html(img_w, img_h)
         with open(textfile, 'w+', encoding='utf-8') as f:
@@ -263,7 +290,7 @@ class Editer(object):
         with open(container, 'w+', encoding='utf-8') as f:
             f.writelines(container_htmls)
 
-    def get_epub(self):
+    def get_epub(self, volume):
         os.remove(os.path.join(self.temp_path, 'buffer.pkl'))
         epub_file = self.epub_path + '/' + self.title + '-' + volume['name'] + '.epub'
         with zipfile.ZipFile(epub_file, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -275,16 +302,35 @@ class Editer(object):
         shutil.rmtree(self.temp_path)
         return epub_file
     
-    def check_volume(self, volume):
+    def check_volume(self, volume, is_gui=False, flag=None, signal=None, editline=None):
         error_nos = []
         if 'javascript' in volume['img_url'] or 'cid' in volume['img_url']:
-            volume['img_url'] = input(f'章节\"插图\"连接有误，请手动输入该章节链接:')
+            if is_gui:
+                print(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“w”开头的链接):')
+                self.hang_flag = True
+                signal.emit('hang')
+                while self.hang_flag:
+                    time.sleep(1)
+                volume['chap_urls'][url_no] = editline.text() 
+            else:
+                volume['img_url'] = input(f'章节\"插图\"连接有误，请手动输入该章节链接:')
+
         for url_no, url in enumerate(volume['chap_urls']):
             if 'javascript' in url or 'cid' in url:
                 error_nos.append(url_no)
         chap_names = volume['chap_names']
         for url_no in error_nos:
-            volume['chap_urls'][url_no] = input(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“w”开头的链接):')
+            if is_gui:
+                print(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“w”开头的链接):')
+                self.hang_flag = True
+                signal.emit('hang')
+                while self.hang_flag:
+                    time.sleep(1)
+                    if self.stop_flag:
+                        return None
+                volume['chap_urls'][url_no] = editline.text() 
+            else:
+                volume['chap_urls'][url_no] = input(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版的链接):')
         return volume
 
 if __name__=='__main__':
@@ -317,6 +363,6 @@ if __name__=='__main__':
     editer.get_epub_head()
 
     print('正在生成电子书....')
-    epub_file = editer.get_epub()
+    epub_file = editer.get_epub(volume)
     print('生成成功！', f'电子书路径【{epub_file}】')
     
