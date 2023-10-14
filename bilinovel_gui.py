@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QObject
 from PyQt5.QtGui import QIcon, QFont, QTextCursor, QPixmap, QColor
 from PyQt5.QtWidgets import QApplication, QFrame, QGridLayout, QFileDialog
 from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, ExpandLayout, TextEdit, ImageLabel, LineEdit, PushButton, Theme,
-                            ProgressRing, setTheme, Theme, setFont, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, BodyLabel)
+                            ProgressRing, setTheme, Theme, setFont, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor)
 from qfluentwidgets import FluentIcon as FIF
 import threading
 import base64
@@ -362,6 +362,7 @@ if __name__ == '__main__':
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
     setTheme(Theme.DARK)
+    setThemeColor('#FF7233')
     app = QApplication(sys.argv)
     w = Window()
     w.show()
