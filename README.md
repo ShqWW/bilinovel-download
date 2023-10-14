@@ -1,6 +1,9 @@
 <div style="display: flex; align-items: center; justify-content: center;">
   <img src="resource/logo_big.png" width="200" style="margin-right: 10px;margin-top: -14px;">
-  <p style="font-size: 30px;">EPUB格式下载器</p>
+</div>
+
+<div style="display: flex; align-items: center; justify-content: center;">
+<p style="font-size: 30px;">EPUB格式下载器</p>
 </div>
 
 
