@@ -1,6 +1,6 @@
 
 <div align="center">
-  <img src="resource/logo_big.png" width="200"/> 
+  <img src="resource/logo_big.png" width="200" style="margin-right: 20px;/> 
 </div>
 
 <h1 align="center">
