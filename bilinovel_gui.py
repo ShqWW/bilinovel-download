@@ -284,6 +284,8 @@ class HomeWidget(QFrame):
             self.clear_signal.emit('')
             self.end_signal.emit('')
             print('错误，请检查网络情况或确认输入是否正确')
+            print('错误信息：')
+            print(e)
         
     def progress_msg(self, input):
         if input == 'start':
