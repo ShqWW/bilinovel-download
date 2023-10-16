@@ -7,6 +7,7 @@ from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, 
 from qfluentwidgets import FluentIcon as FIF
 import sys
 import base64
+import shutil
 from resource.logo import logo_base64
 from resource.book import book_base64
 from bilinovel import *
@@ -220,6 +221,8 @@ class HomeWidget(QFrame):
         sys.stdout = EmittingStr(textWritten=self.outputWritten)
         sys.stderr = EmittingStr(textWritten=self.outputWritten)
         self.text_screen.setText(self.parent.welcome_text) 
+        if os.path.exists('./config'):
+            shutil.rmtree('./config')
     
     def process_start(self):
         self.label_cover.setImage(self.book_icon)
