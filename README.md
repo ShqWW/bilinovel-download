@@ -39,6 +39,9 @@ python bilinovel_gui.py
 
 ## 使用pyinstaller打包:
 ```
+pip install pyinstaller
+```
+```
 pyinstaller -F -w -i .\resource\logo.png --paths=C:\Users\haoru\bilinovel-download .\bilinovel_gui.py --clean
 ```
 [release](https://github.com/ShqWW/bilinovel-download/releases/tag/downloader)页面发布了已经打包好的exe可执行程序(系统最低要求Windows 10)。
