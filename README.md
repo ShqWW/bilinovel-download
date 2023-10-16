@@ -11,7 +11,9 @@
 
 
 
-下载[哔哩轻小说](https://w.linovelib.com)网站下的小说，并转化为EPUB格式，插图、目录与封面自动排版，支持各种阅读器。图形界面使用[PyQt-Fluent-Widgets](https://pyqt-fluent-widgets.readthedocs.io/en/latest/index.html)界面编写，fluent design风格，支持亮暗两种主题。
+[哔哩轻小说](https://w.linovelib.com)网站小说下载，并转化为EPUB格式，插图、目录与封面自动排版，支持多种阅读器。
+
+图形界面使用[PyQt-Fluent-Widgets](https://pyqt-fluent-widgets.readthedocs.io/en/latest/index.html)界面编写，fluent design风格，支持亮暗两种主题。
 
 界面样例：
 <div align="center">
@@ -39,7 +41,7 @@ python bilinovel_gui.py
 ```
 pyinstaller -F -w -i .\resource\logo.png --paths=C:\Users\haoru\bilinovel-download .\bilinovel_gui.py --clean
 ```
-[release](https://github.com/ShqWW/bilinovel-download/releases/tag/downloader)页面也发布了已经打包好的exe可执行程序(系统最好是win10以上版本)。
+[release](https://github.com/ShqWW/bilinovel-download/releases/tag/downloader)页面发布了已经打包好的exe可执行程序(系统最低要求Windows 10)。
 
 ## EPUB书籍编辑和管理读软件推荐：
 1. [Sigil](https://sigil-ebook.com/)

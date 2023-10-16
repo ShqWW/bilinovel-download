@@ -1,32 +1,61 @@
 # coding:utf-8
-import sys
-
-from PyQt5.QtCore import Qt, pyqtSignal, QObject
-from PyQt5.QtGui import QIcon, QFont, QTextCursor, QPixmap, QColor
+from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRegExp
+from PyQt5.QtGui import QIcon, QFont, QTextCursor, QPixmap, QColor,QRegExpValidator
 from PyQt5.QtWidgets import QApplication, QFrame, QGridLayout, QFileDialog
 from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, ExpandLayout, TextEdit, ImageLabel, LineEdit, PushButton, Theme,
-                            ProgressRing, setTheme, Theme, setFont, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor)
+                            ProgressRing, setTheme, Theme, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor, qconfig)
 from qfluentwidgets import FluentIcon as FIF
-import threading
+import sys
 import base64
 from resource.logo import logo_base64
 from resource.book import book_base64
 from bilinovel import *
-from enum import Enum
-from qfluentwidgets import StyleSheetBase, Theme, isDarkTheme, qconfig
 
+font_label = QFont('微软雅黑', 18)
+font_msg = QFont('微软雅黑', 11)
 
+class MainThread(QThread):
+    def __init__(self, parent):
+        super().__init__()
+        self.parent = parent
+        
+    def run(self):
+        try:
+            self.parent.clear_signal.emit('')
+            print('正在获取书籍信息....')
+            volume = self.parent.editer.get_index_url()
+            print(self.parent.editer.title + '-' + volume['name'], self.parent.editer.author)
+            print('****************************')
+            if not self.parent.editer.is_buffer():
+                print('正在下载文本....')
+                volume = self.parent.editer.check_volume(volume, is_gui=True, signal=self.parent.hang_signal, editline=self.parent.editline_hang)
+                self.parent.editer.get_text(volume)
+                self.parent.editer.buffer(volume)
+            else:
+                print('检测到文本文件，直接下载插图')
+                volume = self.parent.editer.buffer(volume)
+            
+            print('正在下载插图....')
+            self.parent.editer.get_image(is_gui=True, signal=self.parent.progressring_signal)
 
-font = QFont()
-font.setFamily("YouYuan")
-font.setWeight(50)
-font.setPointSize(18)
-font.setStyleName("Bold")
+            print('正在编辑元数据....')
+            self.parent.editer.get_cover(is_gui=True, signal = self.parent.cover_signal)
+            self.parent.editer.get_toc(volume)
+            self.parent.editer.get_content(volume)
+            self.parent.editer.get_epub_head()
 
-fontmsg = QFont()
-fontmsg.setFamily("YouYuan")
-fontmsg.setPointSize(12)
-fontmsg.setStyleName("Bold")
+            print('正在生成电子书....')
+            epub_file = self.parent.editer.get_epub(volume)
+            self.parent.clear_signal.emit('')
+            print('生成成功！')
+            print(f'电子书路径【{epub_file}】')
+
+            self.parent.end_signal.emit('')
+        except Exception as e:
+            self.parent.end_signal.emit('')
+            print('错误，请检查网络情况或确认输入是否正确')
+            print('错误信息：')
+            print(e)
 
 class EmittingStr(QObject):
     textWritten = pyqtSignal(str)  # 定义一个发送str的信号
@@ -100,12 +129,19 @@ class HomeWidget(QFrame):
 
     def __init__(self, text: str, parent=None):
         super().__init__(parent=parent)
-        # self.label = (text, self)
         self.setObjectName(text)
         self.parent = parent
         self.label_book = SubtitleLabel('书号：', self)
-        # self.label_book = SubtitleLabel('shuhao1')
         self.label_volumn = SubtitleLabel('卷号：', self)
+        self.editline_book = LineEdit(self) 
+        self.editline_volumn = LineEdit(self) 
+        validator = QRegExpValidator(QRegExp("\\d+"))  # 正则表达式匹配阿拉伯数字
+        self.editline_book.setValidator(validator)
+        self.editline_volumn.setValidator(validator)
+
+        self.editline_book.setMaxLength(4)
+        self.editline_volumn.setMaxLength(2)
+        
         # self.editline_book.setText('2059')
         # self.editline_volumn.setText('3')
         
@@ -116,8 +152,8 @@ class HomeWidget(QFrame):
         self.label_cover = ImageLabel(self.book_icon, self)
         self.label_cover.setFixedSize(self.cover_w, self.cover_h)
 
-
         self.text_screen = TextEdit()
+        self.text_screen.setReadOnly(True)
         self.text_screen.setFixedHeight(self.cover_h)
 
         self.progressRing = ProgressRing(self)
@@ -126,28 +162,23 @@ class HomeWidget(QFrame):
         self.progressRing.setFixedSize(60, 60)
         
         self.btn_run = PushButton('开始下载', self)
+        self.btn_run.setShortcut(Qt.Key_Return)
         self.btn_stop = PushButton('取消', self)
-        self.hang_btn = PushButton('确定', self)
+        self.btn_hang = PushButton('确定', self)
         
         self.editline_hang = LineEdit(self)
-        self.editline_book = LineEdit(self) 
-        self.editline_volumn = LineEdit(self) 
         self.gridLayout = QGridLayout(self)
         self.screen_layout = QGridLayout()
         self.btn_layout = QGridLayout()
         self.hang_layout = QGridLayout()
         
+        self.label_book.setFont(font_label)
+        self.label_volumn.setFont(font_label)
+        self.editline_book.setFont(font_label)
+        self.editline_volumn.setFont(font_label)
+        self.text_screen.setFont(font_msg)
+        self.editline_hang.setFont(font_msg)
 
-        self.label_book.setFont(font)
-        self.label_volumn.setFont(font)
-        self.editline_book.setFont(font)
-        self.editline_volumn.setFont(font)
-        self.text_screen.setFont(fontmsg)
-        self.editline_hang.setFont(fontmsg)
-
-        
-
-        
         self.gridLayout.addWidget(self.editline_book, 0, 1)
         self.gridLayout.addWidget(self.editline_volumn, 1, 1)
         self.gridLayout.addWidget(self.label_book, 0, 0)
@@ -156,8 +187,6 @@ class HomeWidget(QFrame):
         self.gridLayout.addLayout(self.btn_layout, 2, 1, 1, 1)
         self.btn_layout.addWidget(self.btn_run, 2, 1)
         self.btn_layout.addWidget(self.btn_stop, 2, 2)
-        
-        
 
         self.gridLayout.addLayout(self.screen_layout, 3, 0, 2, 2)
 
@@ -167,31 +196,31 @@ class HomeWidget(QFrame):
 
         self.gridLayout.addLayout(self.hang_layout, 5, 0, 1, 2)
         self.hang_layout.addWidget(self.editline_hang, 0, 0)
-        self.hang_layout.addWidget(self.hang_btn, 0, 1)
+        self.hang_layout.addWidget(self.btn_hang, 0, 1)
 
         self.screen_layout.setContentsMargins(0,0,0,0)
         self.btn_layout.setContentsMargins(0,0,0,0)
         self.gridLayout.setContentsMargins(20, 10, 20, 10)
 
         self.btn_run.clicked.connect(self.process_start)
-        self.btn_stop.clicked.connect(self.set_stop_flag)
-        self.hang_btn.clicked.connect(self.process_continue)
+        self.btn_stop.clicked.connect(self.process_stop)
+        self.btn_hang.clicked.connect(self.process_continue)
 
-        self.progressring_signal.connect(self.progress_msg)
-        self.end_signal.connect(self.end_progress)
+        self.progressring_signal.connect(self.progressring_msg)
+        self.end_signal.connect(self.process_end)
         self.hang_signal.connect(self.process_hang)
         self.clear_signal.connect(self.clear_screen)
         self.cover_signal.connect(self.display_cover)
 
         self.progressRing.hide()
-        self.hang_btn.hide()
+        self.btn_hang.hide()
         self.editline_hang.hide()
         self.btn_stop.setEnabled(False)
         
         sys.stdout = EmittingStr(textWritten=self.outputWritten)
         sys.stderr = EmittingStr(textWritten=self.outputWritten)
         self.text_screen.setText(self.parent.welcome_text) 
-
+    
     def process_start(self):
         self.label_cover.setImage(self.book_icon)
         self.label_cover.setFixedSize(self.cover_w, self.cover_h)
@@ -199,17 +228,28 @@ class HomeWidget(QFrame):
         self.btn_run.setText('正在下载')
         self.btn_stop.setEnabled(True)
         self.clear_signal.emit('')
-        self.thread = threading.Thread(target=self.main_threading, args=[])
-        self.thread.daemon=True
-        self.thread.start()
+        book_no = self.editline_book.text()
+        volumn_no = self.editline_volumn.text()
+        if len(book_no)==0 or len(volumn_no)==0 or int(volumn_no)<1:
+            print('请检查输入是否完整正确！')
+            self.end_signal.emit('')
+            return
+        try:
+            self.editer = Editer(root_path=self.parent.out_path, book_no=book_no, volume_no=int(volumn_no))
+        except Exception as e:
+            print(e)
+            self.end_signal.emit('')
+            return
+        self.main_thread = MainThread(self)
+        self.main_thread.start()
         
-
-    def end_progress(self, input=None):
+    def process_end(self, input=None):
         self.btn_run.setEnabled(True)
         self.btn_run.setText('开始下载')
+        self.btn_run.setShortcut(Qt.Key_Return)
         self.btn_stop.setEnabled(False)
         self.progressRing.hide()
-        self.hang_btn.hide()
+        self.btn_hang.hide()
         self.editline_hang.clear()
         self.editline_hang.hide()
         if input=='refresh':
@@ -218,7 +258,6 @@ class HomeWidget(QFrame):
             self.clear_signal.emit('')
             self.text_screen.setText(self.parent.welcome_text) 
         
-    
     def outputWritten(self, text):
         cursor = self.text_screen.textCursor()
         cursor.movePosition(QTextCursor.End)
@@ -232,63 +271,10 @@ class HomeWidget(QFrame):
     def display_cover(self, filepath):
         self.label_cover.setImage(filepath)
         self.label_cover.setFixedSize(self.cover_w, self.cover_h)
-
-    def main_threading(self):
-        try:
-            book_no = self.editline_book.text()
-            volumn_no = int(self.editline_volumn.text())
-            self.editer = Editer(root_path=self.parent.out_path, book_no=book_no, volume_no=volumn_no)
-            print('正在获取书籍信息....')
-            volume = self.editer.get_index_url()
-            print(self.editer.title + '-' + volume['name'], self.editer.author)
-            print('****************************')
-            if not self.editer.is_buffer():
-                print('正在下载文本....')
-                if self.editer.stop_flag:
-                    return
-                volume = self.editer.check_volume(volume, is_gui=True, signal=self.hang_signal, editline=self.editline_hang)
-
-                if self.editer.stop_flag:
-                    return
-                self.editer.get_text(volume)
-
-                if self.editer.stop_flag:
-                    return
-                self.editer.buffer(volume)
-            else:
-                print('检测到文本文件，直接下载插图')
-                volume = self.editer.buffer(volume)
-            
-            if self.editer.stop_flag:
-                return
-
-            print('正在下载插图....')
-            self.editer.get_image(is_gui=True, signal=self.progressring_signal)
-
-            if self.editer.stop_flag:
-                return
-            print('正在编辑元数据....')
-            self.editer.get_cover(is_gui=True, signal = self.cover_signal)
-            self.editer.get_toc(volume)
-            self.editer.get_content(volume)
-            self.editer.get_epub_head()
-
-            print('正在生成电子书....')
-            epub_file = self.editer.get_epub(volume)
-            self.clear_signal.emit('')
-            print('生成成功！')
-            print(f'电子书路径【{epub_file}】')
-
-            self.end_signal.emit('')
-        except Exception as e:
-            self.clear_signal.emit('')
-            self.end_signal.emit('')
-            print('错误，请检查网络情况或确认输入是否正确')
-            print('错误信息：')
-            print(e)
         
-    def progress_msg(self, input):
+    def progressring_msg(self, input):
         if input == 'start':
+            self.progressRing.setValue(0)
             self.progressRing.show()
         elif input == 'end':
             self.progressRing.hide()
@@ -296,33 +282,34 @@ class HomeWidget(QFrame):
             self.progressRing.setValue(input)
     
     def process_hang(self, input=None):
-        self.hang_btn.show()
+        self.btn_hang.setEnabled(True)
+        self.btn_hang.setShortcut(Qt.Key_Return)
+        self.btn_hang.show()
         self.editline_hang.show()
     
     def process_continue(self, input=None):
         self.editer.hang_flag=False
-        self.hang_btn.hide()
+        self.btn_hang.hide()
+        self.btn_hang.setEnabled(False)
         self.editline_hang.hide()
     
-    def set_stop_flag(self):
-        self.editer.stop_flag = True
+    def process_stop(self):
+        self.main_thread.terminate()
         self.end_signal.emit('refresh')
         
         
     
 
 class Window(FluentWindow):
-
     def __init__(self):
         super().__init__()
 
         self.out_path = 'C:/Users/haoru/Downloads' 
-        self.welcome_text = '搜索小说请登录哔哩轻小说手机版https://w.linovelib.com，查询后请根据书籍网址输入书号，并根据需要输入下载的卷号。例如小说网址是https://w.linovelib.com/novel/2704.html，要下载第二卷，则书号输入2704，卷号输入2。'
+        self.welcome_text = '    搜索小说请登录哔哩轻小说手机版https://w.linovelib.com，查询后请根据书籍网址输入书号，并根据需要输入下载的卷号（卷号是按照网页的顺序，非实际出版顺序）。\n    例如小说网址是https://w.linovelib.com/novel/2704.html，要下载第二卷，则书号输入2704，卷号输入2。\n    书号最多输入4位阿拉伯数字，卷号最多输入2位阿拉伯数字。'
         self.homeInterface = HomeWidget('Home Interface', self)
         self.settingInterface = SettingWidget('Setting Interface', self)
         self.initNavigation()
         self.initWindow()
-        
         
     def initNavigation(self):
         self.addSubInterface(self.homeInterface, FIF.HOME, '主界面')
@@ -330,12 +317,11 @@ class Window(FluentWindow):
 
     def initWindow(self):
         self.resize(600, 355)
-        
         pixmap = QPixmap()
         pixmap.loadFromData(base64.b64decode(logo_base64))
         self.setWindowIcon(QIcon(pixmap))
         self.setWindowTitle('哔哩轻小说EPUB下载器')
-        self.setFont(font)
+        self.setFont(font_label)
 
         desktop = QApplication.desktop().availableGeometry()
         w, h = desktop.width(), desktop.height()

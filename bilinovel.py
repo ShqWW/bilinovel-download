@@ -40,11 +40,8 @@ class Editer(object):
         self.main_page = f'https://w.linovelib.com/novel/{book_no}.html'
         self.cata_page = f'https://w.linovelib.com/novel/{book_no}/catalog'
         self.url_head = 'https://w.linovelib.com'
-        self.stop_flag = False
 
         main_html = self.get_html(self.main_page)
-        if self.stop_flag:
-            return None
         bf = BeautifulSoup(main_html, 'html.parser')
         bf = bf.find('div', {'id': 'bookDetailWrapper'})
         self.title = bf.find('h2', {"class": "book-title"}).text
@@ -70,8 +67,6 @@ class Editer(object):
     """
     def get_html(self, url, is_gbk=False):
         while True:
-            if self.stop_flag:
-                return None
             try:
                 req = requests.get(url=url, headers=self.header, timeout=5)
                 if is_gbk:
@@ -84,8 +79,6 @@ class Editer(object):
     
     def get_html_img(self, url):
         while True:
-            if self.stop_flag:
-                return None
             try:
                 req=requests.get(url, headers=self.header, timeout=5)
                 break
@@ -96,8 +89,6 @@ class Editer(object):
     
     def get_index_url(self):
         cata_html = self.get_html(self.cata_page, is_gbk=False)
-        if self.stop_flag:
-            return None
         cata_html = restore_chars(cata_html)
         bf = BeautifulSoup(cata_html, 'html.parser')
         chap_html_list = bf.find('ol', {'id': 'volumes'}).find_all('li')
@@ -160,8 +151,6 @@ class Editer(object):
                 str_out = f'    正在下载第{page_no + 1}页......'
             print(str_out)
             content_html = self.get_html(url, is_gbk=False)
-            if self.stop_flag:
-                return None
             text = self.get_page_text(content_html)
             text_chap += text
             url = self.url_head + re.search(r'nextpage="(.*?)"', content_html).group(1)
@@ -176,16 +165,12 @@ class Editer(object):
         img_chap_name = '彩插'
         if img_url != '':
             text = self.get_chap_text(img_url, '彩页')
-            if self.stop_flag:
-                return None
             text_html_color = text2htmls(img_chap_name, text)
             
         chap_names, chap_urls = volume['chap_names'], volume['chap_urls']
         for chap_no, (chap_name, chap_url) in enumerate(zip(chap_names, chap_urls)):
             # print(chap_name, end='   ')
             text = self.get_chap_text(chap_url, chap_name)
-            if self.stop_flag:
-                return None
             text_html = text2htmls(chap_name, text) 
             textfile = self.text_path + f'/{str(chap_no).zfill(2)}.xhtml'
             with open(textfile, 'w+', encoding='utf-8') as f:
@@ -236,8 +221,6 @@ class Editer(object):
             signal.emit('start')
             for i, (_, (img_url, img_name)) in enumerate(self.img_url_map.items()):
                 content = self.get_html_img(img_url)
-                if self.stop_flag:
-                    return None
                 with open(img_path+f'/{img_name}.jpg', 'wb') as f:
                     f.write(content) #写入二进制内容 
                 signal.emit(int(100*(i+1)/len_iter))
@@ -326,8 +309,6 @@ class Editer(object):
                 signal.emit('hang')
                 while self.hang_flag:
                     time.sleep(1)
-                    if self.stop_flag:
-                        return None
                 volume['chap_urls'][url_no] = editline.text() 
             else:
                 volume['chap_urls'][url_no] = input(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“w”开头的链接):')
