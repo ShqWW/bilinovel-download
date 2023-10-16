@@ -46,7 +46,7 @@ pyinstaller -F -w -i .\resource\logo.png --paths=C:\Users\haoru\bilinovel-downlo
 ```
 [release](https://github.com/ShqWW/bilinovel-download/releases/tag/downloader)页面发布了已经打包好的exe可执行程序(系统最低要求Windows 10)。
 
-## EPUB书籍编辑和管理读软件推荐：
+## EPUB书籍编辑和管理软件推荐：
 1. [Sigil](https://sigil-ebook.com/)
 2. [Calibre](https://www.calibre-ebook.com/)
 
