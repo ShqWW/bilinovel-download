@@ -15,6 +15,8 @@
 
 图形界面使用[PyQt-Fluent-Widgets](https://pyqt-fluent-widgets.readthedocs.io/en/latest/index.html)界面编写，fluent design风格，支持亮暗两种主题。
 
+[release](https://github.com/ShqWW/bilinovel-download/releases/tag/downloader)页面发布了已经打包好的exe可执行程序(系统最低要求Windows 10)。
+
 界面样例：
 <div align="center">
   <img src="resource/example1.png" width="400"/>
@@ -44,7 +46,7 @@ pip install pyinstaller
 ```
 pyinstaller -F -w -i .\resource\logo.png --paths=C:\Users\haoru\bilinovel-download .\bilinovel_gui.py --clean
 ```
-[release](https://github.com/ShqWW/bilinovel-download/releases/tag/downloader)页面发布了已经打包好的exe可执行程序(系统最低要求Windows 10)。
+
 
 ## EPUB书籍编辑和管理软件推荐：
 1. [Sigil](https://sigil-ebook.com/)
