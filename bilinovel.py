@@ -37,9 +37,9 @@ class Editer(object):
         # 设置headers是为了模拟浏览器访问 否则的话可能会被拒绝 可通过浏览器获取，这里不用修改
         self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': "https://w.linovelib.com/"}
 
-        self.main_page = f'https://w.linovelib.com/novel/{book_no}.html'
-        self.cata_page = f'https://w.linovelib.com/novel/{book_no}/catalog'
-        self.url_head = 'https://w.linovelib.com'
+        self.main_page = f'https://www.bilinovel.com/novel/{book_no}.html'
+        self.cata_page = f'https://www.bilinovel.com/novel/{book_no}/catalog'
+        self.url_head = 'https://www.bilinovel.com'
 
         main_html = self.get_html(self.main_page)
         bf = BeautifulSoup(main_html, 'html.parser')
@@ -113,34 +113,33 @@ class Editer(object):
                         chap_urls.append(url)
         volume = {'name': name, 'chap_names': chap_names, 'chap_urls':chap_urls, 'img_url': img_url}
         return volume
-
-    def get_page_text(self, content_html):
+        
+    def get_page_text(self, content_html, is_color=False):
         bf = BeautifulSoup(content_html, 'html.parser')
-        text = str(bf.find('div', {'id': 'ccacontent'}))
-        img_urlre_list = re.findall(r"<img.*?/>", text)
+        text_with_head = bf.find('div', {'id': 'ccacontent', 'class': 'bcontent'}) 
+        text_html = str(text_with_head)
+        img_urlre_list = re.findall(r"<img .*?>", text_html)
         for img_urlre in img_urlre_list:
-            img_url = re.search(r'src="(.*?)"', img_urlre).group(1).replace('img1', 'img3')
-            img_url_name = re.search(r'.com/(.*?).jpg', text).group(1)
-            text = text.replace('<br/>\n' + img_urlre +'\n<br/>', img_urlre)
-            if not img_url_name in self.img_url_map:
-                self.img_url_map[img_url_name] = (img_url, str(len(self.img_url_map)).zfill(2))
-            ################################图片名占位符, 没有换行情况下加入换行，独自占用一行
-            else:
-                img_url = self.img_url_map[img_url_name][0]
-            img_symbol = f'[img:{self.img_url_map[img_url_name][1]}]'
+            img_url_tail = re.search(r'.[a-zA-Z]{3}/(.*?).jpg', img_urlre).group(1)
+            img_url = 'https://img3.readpai.com/{}.jpg'.format(img_url_tail)
+
+            text_html = text_html.replace('<br/>\n' + img_urlre +'\n<br/>', img_urlre)
+            if not img_url in self.img_url_map:
+                self.img_url_map[img_url] = str(len(self.img_url_map)).zfill(2)
+            img_symbol = f'<p>[img:{self.img_url_map[img_url]}]</p>'
+            # print(img_symbol)
             if '00' in img_symbol:
-                text = text.replace(img_urlre, '')  #默认第一张为封面图片 不写入彩页
+                text_html = text_html.replace(img_urlre, '')  #默认第一张为封面图片 不写入彩页
             else:
-                text = text.replace(img_urlre, img_symbol)
-                symbol_index = text.index(img_symbol)
-                if text[symbol_index-1] != '\n':
-                    text = text[:symbol_index] + '\n' + text[symbol_index:]
-        bf = BeautifulSoup(text, 'html.parser')
-        text = bf.find('div', {'id': 'ccacontent'}).text[:-1]
+                text_html = text_html.replace(img_urlre, img_symbol)
+                symbol_index = text_html.index(img_symbol)
+                if text_html[symbol_index-1] != '\n':
+                    text_html = text_html[:symbol_index] + '\n' + text_html[symbol_index:]
+        text = BeautifulSoup(text_html, 'html.parser').get_text()
         text = restore_chars(text)
         return text
     
-    def get_chap_text(self, url, chap_name):
+    def get_chap_text(self, url, chap_name, is_color=False):
         chap_no = url.split('/')[-1].strip('.html')
         text_chap = ''
         page_no = 0 
@@ -151,7 +150,7 @@ class Editer(object):
                 str_out = f'    正在下载第{page_no + 1}页......'
             print(str_out)
             content_html = self.get_html(url, is_gbk=False)
-            text = self.get_page_text(content_html)
+            text = self.get_page_text(content_html, is_color=is_color)
             text_chap += text
             url = self.url_head + re.search(r'nextpage="(.*?)"', content_html).group(1)
             page_no += 1
@@ -164,7 +163,7 @@ class Editer(object):
         img_strs, del_index = [], []
         img_chap_name = '彩插'
         if img_url != '':
-            text = self.get_chap_text(img_url, '彩页')
+            text = self.get_chap_text(img_url, '彩页', True)
             text_html_color = text2htmls(img_chap_name, text)
             
         chap_names, chap_urls = volume['chap_names'], volume['chap_urls']
@@ -183,7 +182,7 @@ class Editer(object):
         print('****************************')
         
         # 将彩页中后文已经出现的图片删除，避免重复
-        if img_url!='':
+        if img_url!='': #判断彩页是否存在
             text_html_color_new = []
             textfile = self.text_path + '/color.xhtml'
             for text_line in text_html_color: 
@@ -219,14 +218,14 @@ class Editer(object):
         if is_gui:
             len_iter = len(self.img_url_map.items())
             signal.emit('start')
-            for i, (_, (img_url, img_name)) in enumerate(self.img_url_map.items()):
+            for i, (img_url, img_name) in enumerate(self.img_url_map.items()):
                 content = self.get_html_img(img_url)
                 with open(img_path+f'/{img_name}.jpg', 'wb') as f:
                     f.write(content) #写入二进制内容 
                 signal.emit(int(100*(i+1)/len_iter))
             signal.emit('end')
         else:
-            for _, (img_url, img_name) in tqdm(self.img_url_map.items()):
+            for img_url, img_name in tqdm(self.img_url_map.items()):
                 content = self.get_html_img(img_url)
                 with open(img_path+f'/{img_name}.jpg', 'wb') as f:
                     f.write(content) #写入二进制内容
@@ -304,14 +303,14 @@ class Editer(object):
         chap_names = volume['chap_names']
         for url_no in error_nos:
             if is_gui:
-                print(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“w”开头的链接):')
+                print(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“www.bilinovel”开头的链接):')
                 self.hang_flag = True
                 signal.emit('hang')
                 while self.hang_flag:
                     time.sleep(1)
                 volume['chap_urls'][url_no] = editline.text() 
             else:
-                volume['chap_urls'][url_no] = input(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“w”开头的链接):')
+                volume['chap_urls'][url_no] = input(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“www.bilinovel”开头的链接):')
         return volume
 
 if __name__=='__main__':
@@ -320,6 +319,9 @@ if __name__=='__main__':
     if not args.no_input:
         args.book_no = input('请输入书籍号：')
         args.volume_no = int(input('请输入卷号：'))
+    
+    # args.book_no = 3800
+    # args.volume_no = 1
 
     
     editer = Editer(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
