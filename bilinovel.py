@@ -171,7 +171,6 @@ class Editer(object):
             
         chap_names, chap_urls = volume['chap_names'], volume['chap_urls']
         for chap_no, (chap_name, chap_url) in enumerate(zip(chap_names, chap_urls)):
-            # print(chap_name, end='   ')
             text = self.get_chap_text(chap_url, chap_name)
             text_html = text2htmls(chap_name, text) 
             textfile = self.text_path + f'/{str(chap_no).zfill(2)}.xhtml'
@@ -321,12 +320,12 @@ class Editer(object):
 if __name__=='__main__':
     args = parse_args()
     download_path = os.path.join(os.path.expanduser('~'), 'Downloads')
-    # if not args.no_input:
-    #     args.book_no = input('请输入书籍号：')
-    #     args.volume_no = int(input('请输入卷号：'))
+    if not args.no_input:
+        args.book_no = input('请输入书籍号：')
+        args.volume_no = int(input('请输入卷号：'))
     
-    args.book_no = 2342
-    args.volume_no = 14
+    # args.book_no = 2342
+    # args.volume_no = 14
 
     
     editer = Editer(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
