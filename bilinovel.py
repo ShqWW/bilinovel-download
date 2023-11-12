@@ -32,15 +32,14 @@ def parse_args():
 
 
 class Editer(object):
-    def __init__(self, root_path, head='www.bilinovel', book_no='0000', volume_no=1):
+    def __init__(self, root_path, head='https://www.bilinovel.com', book_no='0000', volume_no=1):
         
         # 设置headers是为了模拟浏览器访问 否则的话可能会被拒绝 可通过浏览器获取，这里不用修改
         self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': "https://w.linovelib.com/"}
 
-        self.head = head
-        self.main_page = f'https://www.bilinovel.com/novel/{book_no}.html'
-        self.cata_page = f'https://www.bilinovel.com/novel/{book_no}/catalog'
-        self.url_head = 'https://www.bilinovel.com'
+        self.url_head = head
+        self.main_page = f'{self.url_head}/novel/{book_no}.html'
+        self.cata_page = f'{self.url_head}/novel/{book_no}/catalog'
 
         main_html = self.get_html(self.main_page)
         bf = BeautifulSoup(main_html, 'html.parser')
@@ -289,7 +288,7 @@ class Editer(object):
     def check_volume(self, volume, is_gui=False, flag=None, signal=None, editline=None):
         error_nos = []
         if 'javascript' in volume['img_url'] or 'cid' in volume['img_url']:
-            error_msg = f'章节\"插图\"连接有误，请手动输入该章节链接(手机版“{self.head}”开头的链接):'
+            error_msg = f'章节\"插图\"连接有误，请手动输入该章节链接(手机版“{self.url_head}”开头的链接):'
             if is_gui:
                 print(error_msg)
                 self.hang_flag = True
@@ -305,7 +304,7 @@ class Editer(object):
                 error_nos.append(url_no)
         chap_names = volume['chap_names']
         for url_no in error_nos:
-            error_msg = f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“{self.head}”开头的链接):'
+            error_msg = f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“{self.url_head}”开头的链接):'
             if is_gui:
                 print(error_msg)
                 self.hang_flag = True
@@ -320,12 +319,12 @@ class Editer(object):
 if __name__=='__main__':
     args = parse_args()
     download_path = os.path.join(os.path.expanduser('~'), 'Downloads')
-    if not args.no_input:
-        args.book_no = input('请输入书籍号：')
-        args.volume_no = int(input('请输入卷号：'))
+    # if not args.no_input:
+    #     args.book_no = input('请输入书籍号：')
+    #     args.volume_no = int(input('请输入卷号：'))
     
-    # args.book_no = 2342
-    # args.volume_no = 14
+    args.book_no = 26
+    args.volume_no = 12
 
     
     editer = Editer(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
