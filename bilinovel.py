@@ -120,9 +120,12 @@ class Editer(object):
         text_with_head = bf.find('div', {'id': 'ccacontent', 'class': 'bcontent'}) 
         text_html = str(text_with_head)
         img_urlre_list = re.findall(r"<img .*?>", text_html)
+        # print(img_urlre_list)
         for img_urlre in img_urlre_list:
-            img_url_tail = re.search(r'.[a-zA-Z]{3}/(.*?).jpg', img_urlre).group(1)
-            img_url = 'https://img3.readpai.com/{}.jpg'.format(img_url_tail)
+            img_url_full = re.search(r'.[a-zA-Z]{3}/(.*?).(jpg|png)', img_urlre)
+            img_url_name = img_url_full.group(1)
+            img_url_tail = img_url_full.group(0)[-3:]
+            img_url = f'https://img3.readpai.com/{img_url_name}.{img_url_tail}'
 
             text_html = text_html.replace('<br/>\n' + img_urlre +'\n<br/>', img_urlre)
             if not img_url in self.img_url_map:
@@ -319,12 +322,12 @@ class Editer(object):
 if __name__=='__main__':
     args = parse_args()
     download_path = os.path.join(os.path.expanduser('~'), 'Downloads')
-    if not args.no_input:
-        args.book_no = input('请输入书籍号：')
-        args.volume_no = int(input('请输入卷号：'))
+    # if not args.no_input:
+    #     args.book_no = input('请输入书籍号：')
+    #     args.volume_no = int(input('请输入卷号：'))
     
-    # args.book_no = 3800
-    # args.volume_no = 1
+    args.book_no = 2342
+    args.volume_no = 14
 
     
     editer = Editer(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
