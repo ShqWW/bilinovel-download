@@ -32,12 +32,12 @@ def parse_args():
 
 
 class Editer(object):
-    def __init__(self, root_path, book_no='0000', volume_no=1):
+    def __init__(self, root_path, head='www.bilinovel', book_no='0000', volume_no=1):
         
         # 设置headers是为了模拟浏览器访问 否则的话可能会被拒绝 可通过浏览器获取，这里不用修改
         self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': "https://w.linovelib.com/"}
 
-        self.head = 'www.bilinovel'
+        self.head = head
         self.main_page = f'https://www.bilinovel.com/novel/{book_no}.html'
         self.cata_page = f'https://www.bilinovel.com/novel/{book_no}/catalog'
         self.url_head = 'https://www.bilinovel.com'
