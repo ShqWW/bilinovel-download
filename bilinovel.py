@@ -37,6 +37,7 @@ class Editer(object):
         # 设置headers是为了模拟浏览器访问 否则的话可能会被拒绝 可通过浏览器获取，这里不用修改
         self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': "https://w.linovelib.com/"}
 
+        self.head = 'www.bilinovel'
         self.main_page = f'https://www.bilinovel.com/novel/{book_no}.html'
         self.cata_page = f'https://www.bilinovel.com/novel/{book_no}/catalog'
         self.url_head = 'https://www.bilinovel.com'
@@ -288,14 +289,14 @@ class Editer(object):
         error_nos = []
         if 'javascript' in volume['img_url'] or 'cid' in volume['img_url']:
             if is_gui:
-                print(f'章节\"插图\"连接有误，请手动输入该章节链接(手机版“w”开头的链接):')
+                print(f'章节\"插图\"连接有误，请手动输入该章节链接(手机版“{self.head}”开头的链接):')
                 self.hang_flag = True
                 signal.emit('hang')
                 while self.hang_flag:
                     time.sleep(1)
-                volume['chap_urls'][url_no] = editline.text() 
+                volume['img_url'] = editline.text() 
             else:
-                volume['img_url'] = input(f'章节\"插图\"连接有误，请手动输入该章节链接(手机版“w”开头的链接):')
+                volume['img_url'] = input(f'章节\"插图\"连接有误，请手动输入该章节链接(手机版“{self.head}”开头的链接):')
 
         for url_no, url in enumerate(volume['chap_urls']):
             if 'javascript' in url or 'cid' in url:
@@ -303,14 +304,14 @@ class Editer(object):
         chap_names = volume['chap_names']
         for url_no in error_nos:
             if is_gui:
-                print(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“www.bilinovel”开头的链接):')
+                print(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“{self.head}”开头的链接):')
                 self.hang_flag = True
                 signal.emit('hang')
                 while self.hang_flag:
                     time.sleep(1)
                 volume['chap_urls'][url_no] = editline.text() 
             else:
-                volume['chap_urls'][url_no] = input(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“www.bilinovel”开头的链接):')
+                volume['chap_urls'][url_no] = input(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“{self.head}”开头的链接):')
         return volume
 
 if __name__=='__main__':
