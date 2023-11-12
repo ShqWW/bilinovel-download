@@ -120,7 +120,6 @@ class Editer(object):
         text_with_head = bf.find('div', {'id': 'ccacontent', 'class': 'bcontent'}) 
         text_html = str(text_with_head)
         img_urlre_list = re.findall(r"<img .*?>", text_html)
-        # print(img_urlre_list)
         for img_urlre in img_urlre_list:
             img_url_full = re.search(r'.[a-zA-Z]{3}/(.*?).(jpg|png)', img_urlre)
             img_url_name = img_url_full.group(1)
