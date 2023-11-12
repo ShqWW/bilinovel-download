@@ -288,30 +288,32 @@ class Editer(object):
     def check_volume(self, volume, is_gui=False, flag=None, signal=None, editline=None):
         error_nos = []
         if 'javascript' in volume['img_url'] or 'cid' in volume['img_url']:
+            error_msg = f'章节\"插图\"连接有误，请手动输入该章节链接(手机版“{self.head}”开头的链接):'
             if is_gui:
-                print(f'章节\"插图\"连接有误，请手动输入该章节链接(手机版“{self.head}”开头的链接):')
+                print(error_msg)
                 self.hang_flag = True
                 signal.emit('hang')
                 while self.hang_flag:
                     time.sleep(1)
                 volume['img_url'] = editline.text() 
             else:
-                volume['img_url'] = input(f'章节\"插图\"连接有误，请手动输入该章节链接(手机版“{self.head}”开头的链接):')
+                volume['img_url'] = input(error_msg)
 
         for url_no, url in enumerate(volume['chap_urls']):
             if 'javascript' in url or 'cid' in url:
                 error_nos.append(url_no)
         chap_names = volume['chap_names']
         for url_no in error_nos:
+            error_msg = f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“{self.head}”开头的链接):'
             if is_gui:
-                print(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“{self.head}”开头的链接):')
+                print(error_msg)
                 self.hang_flag = True
                 signal.emit('hang')
                 while self.hang_flag:
                     time.sleep(1)
                 volume['chap_urls'][url_no] = editline.text() 
             else:
-                volume['chap_urls'][url_no] = input(f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“{self.head}”开头的链接):')
+                volume['chap_urls'][url_no] = input(error_msg)
         return volume
 
 if __name__=='__main__':
