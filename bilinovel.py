@@ -319,12 +319,12 @@ class Editer(object):
 if __name__=='__main__':
     args = parse_args()
     download_path = os.path.join(os.path.expanduser('~'), 'Downloads')
-    # if not args.no_input:
-    #     args.book_no = input('请输入书籍号：')
-    #     args.volume_no = int(input('请输入卷号：'))
+    if not args.no_input:
+        args.book_no = input('请输入书籍号：')
+        args.volume_no = int(input('请输入卷号：'))
     
-    args.book_no = 26
-    args.volume_no = 12
+    # args.book_no = 26
+    # args.volume_no = 12
 
     
     editer = Editer(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
