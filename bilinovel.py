@@ -31,13 +31,16 @@ def parse_args():
     return args
 
 
+
 class Editer(object):
     def __init__(self, root_path, head='https://www.bilinovel.com', book_no='0000', volume_no=1):
         
         # 设置headers是为了模拟浏览器访问 否则的话可能会被拒绝 可通过浏览器获取，这里不用修改
         self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': "https://w.linovelib.com/"}
+        # self.header = HEARDERS
 
         self.url_head = head
+        # self.url_head = 'https://w.linovelib.com'
         self.main_page = f'{self.url_head}/novel/{book_no}.html'
         self.cata_page = f'{self.url_head}/novel/{book_no}/catalog'
 
@@ -59,6 +62,9 @@ class Editer(object):
 
         self.img_path = os.path.join(self.temp_path,  'OEBPS/Images')
         os.makedirs(self.img_path, exist_ok=True)
+
+
+        self.error_last_chap_list = []
 
         
 
@@ -141,22 +147,29 @@ class Editer(object):
         text = restore_chars(text)
         return text
     
-    def get_chap_text(self, url, chap_name, is_color=False):
-        chap_no = url.split('/')[-1].strip('.html')
+    def get_chap_text(self, url, chap_name, is_color=False, return_next_chapter=False):
         text_chap = ''
-        page_no = 0 
-        while chap_no in url:
-            if page_no == 0:
+        page_no = 1 
+        url_ori = url
+        next_chap_url = None
+        while True:
+            if page_no == 1:
                 str_out = chap_name
             else:
-                str_out = f'    正在下载第{page_no + 1}页......'
+                str_out = f'    正在下载第{page_no}页......'
             print(str_out)
             content_html = self.get_html(url, is_gbk=False)
             text = self.get_page_text(content_html, is_color=is_color)
             text_chap += text
-            url = self.url_head + re.search(r'nextpage="(.*?)"', content_html).group(1)
-            page_no += 1
-        return text_chap
+            url_new = url_ori.replace('.html', '_{}.html'.format(page_no+1))[len(self.url_head):]
+            if url_new in content_html:
+                page_no += 1
+                url = self.url_head + url_new
+            else:
+                if return_next_chapter:
+                    next_chap_url = self.url_head + re.search(r'nextpage="(.*?)"', content_html).group(1)
+                break
+        return text_chap, next_chap_url
         
     
     def get_text(self, volume):
@@ -165,12 +178,20 @@ class Editer(object):
         img_strs, del_index = [], []
         img_chap_name = '彩插'
         if img_url != '':
-            text = self.get_chap_text(img_url, '彩页', True)
+            is_fix_next_chap_url = (img_chap_name in self.error_last_chap_list)
+            text, next_chap_url = self.get_chap_text(img_url, '彩页', is_color=True, return_next_chapter=is_fix_next_chap_url)
+            if is_fix_next_chap_url: 
+                volume['chap_urls'][0] = next_chap_url
             text_html_color = text2htmls(img_chap_name, text)
             
         chap_names, chap_urls = volume['chap_names'], volume['chap_urls']
         for chap_no, (chap_name, chap_url) in enumerate(zip(chap_names, chap_urls)):
-            text = self.get_chap_text(chap_url, chap_name)
+            
+            is_fix_next_chap_url = (chap_name in self.error_last_chap_list)
+            text, next_chap_url = self.get_chap_text(chap_url, chap_name, return_next_chapter=is_fix_next_chap_url)
+            # print('aaa', self.error_last_chap_list)
+            if is_fix_next_chap_url: 
+                chap_urls[chap_no+1] = next_chap_url
             text_html = text2htmls(chap_name, text) 
             textfile = self.text_path + f'/{str(chap_no).zfill(2)}.xhtml'
             with open(textfile, 'w+', encoding='utf-8') as f:
@@ -286,35 +307,38 @@ class Editer(object):
         return epub_file
     
     def check_volume(self, volume, is_gui=False, flag=None, signal=None, editline=None):
-        error_nos = []
-        if 'javascript' in volume['img_url'] or 'cid' in volume['img_url']:
-            error_msg = f'章节\"插图\"连接有误，请手动输入该章节链接(手机版“{self.url_head}”开头的链接):'
-            if is_gui:
-                print(error_msg)
-                self.hang_flag = True
-                signal.emit('hang')
-                while self.hang_flag:
-                    time.sleep(1)
-                volume['img_url'] = editline.text() 
+        
+        if self.check_url(volume['img_url']):
+            first_chap_url = volume['chap_urls'][0]
+            if self.check_url(first_chap_url): #插图和第一章链接都失效则需要手动输入
+                error_msg = f'章节\"插图\"连接失效，请手动输入该章节链接(手机版“{self.url_head}”开头的链接):'
+                if is_gui:
+                    print(error_msg)
+                    self.hang_flag = True
+                    signal.emit('hang')
+                    while self.hang_flag:
+                        time.sleep(1)
+                    volume['img_url'] = editline.text() 
+                else:
+                    volume['img_url'] = input(error_msg)
             else:
-                volume['img_url'] = input(error_msg)
+                content_html = self.get_html(first_chap_url, is_gbk=False)
+                img_url = self.url_head + re.search(r'prevpage="(.*?)"', content_html).group(1)
+                volume['img_url'] = img_url
 
-        for url_no, url in enumerate(volume['chap_urls']):
-            if 'javascript' in url or 'cid' in url:
-                error_nos.append(url_no)
         chap_names = volume['chap_names']
-        for url_no in error_nos:
-            error_msg = f'章节\"{chap_names[url_no]}\"连接有误，请手动输入该章节链接(手机版“{self.url_head}”开头的链接):'
-            if is_gui:
-                print(error_msg)
-                self.hang_flag = True
-                signal.emit('hang')
-                while self.hang_flag:
-                    time.sleep(1)
-                volume['chap_urls'][url_no] = editline.text() 
-            else:
-                volume['chap_urls'][url_no] = input(error_msg)
+        for url_no, url in enumerate(volume['chap_urls']):
+            if self.check_url(url):
+                if url_no==0:
+                    self.error_last_chap_list.append('彩插')
+                else:
+                    self.error_last_chap_list.append(chap_names[url_no-1])
         return volume
+    
+    def check_url(self, url):
+        return ('javascript' in url or 'cid' in url)   #当检测有问题返回True
+
+        
 
 if __name__=='__main__':
     args = parse_args()
@@ -323,8 +347,8 @@ if __name__=='__main__':
         args.book_no = input('请输入书籍号：')
         args.volume_no = int(input('请输入卷号：'))
     
-    # args.book_no = 26
-    # args.volume_no = 12
+    # args.book_no = 2342
+    # args.volume_no = 2
 
     
     editer = Editer(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
