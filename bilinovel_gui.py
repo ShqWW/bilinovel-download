@@ -24,29 +24,29 @@ class MainThread(QThread):
         try:
             self.parent.clear_signal.emit('')
             print('正在获取书籍信息....')
-            volume = self.parent.editer.get_index_url()
-            print(self.parent.editer.title + '-' + volume['name'], self.parent.editer.author)
+            self.parent.editer.get_index_url()
+            print(self.parent.editer.title + '-' + self.parent.editer.volume['name'], self.parent.editer.author)
             print('****************************')
             if not self.parent.editer.is_buffer():
                 print('正在下载文本....')
-                volume = self.parent.editer.check_volume(volume, is_gui=True, signal=self.parent.hang_signal, editline=self.parent.editline_hang)
-                self.parent.editer.get_text(volume)
-                self.parent.editer.buffer(volume)
+                self.parent.editer.check_volume(is_gui=True, signal=self.parent.hang_signal, editline=self.parent.editline_hang)
+                self.parent.editer.get_text()
+                self.parent.editer.buffer()
             else:
                 print('检测到文本文件，直接下载插图')
-                volume = self.parent.editer.buffer(volume)
+                self.parent.editer.buffer()
             
             print('正在下载插图....')
             self.parent.editer.get_image(is_gui=True, signal=self.parent.progressring_signal)
 
             print('正在编辑元数据....')
             self.parent.editer.get_cover(is_gui=True, signal = self.parent.cover_signal)
-            self.parent.editer.get_toc(volume)
-            self.parent.editer.get_content(volume)
+            self.parent.editer.get_toc()
+            self.parent.editer.get_content()
             self.parent.editer.get_epub_head()
 
             print('正在生成电子书....')
-            epub_file = self.parent.editer.get_epub(volume)
+            epub_file = self.parent.editer.get_epub()
             self.parent.clear_signal.emit('')
             print('生成成功！')
             print(f'电子书路径【{epub_file}】')

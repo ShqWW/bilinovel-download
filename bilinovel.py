@@ -1,10 +1,6 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
 
-from codecs import charmap_encode
-from operator import index, itemgetter
-from turtle import down
-from typing import Container
 import requests  # 用来抓取网页的html源码
 import random  # 取随机数
 from bs4 import BeautifulSoup  # 用于代替正则式 取源码中相应标签中的内容
@@ -14,7 +10,6 @@ from rich.progress import track as tqdm
 from utils import *
 import zipfile
 import shutil
-import numpy as np
 import argparse
 import re
 import pickle
@@ -29,8 +24,6 @@ def parse_args():
     parser.add_argument('--no_input', default=False, type=bool)
     args = parser.parse_args()
     return args
-
-
 
 class Editer(object):
     def __init__(self, root_path, head='https://www.bilinovel.com', book_no='0000', volume_no=1):
@@ -48,7 +41,7 @@ class Editer(object):
         self.title = bf.find('h2', {"class": "book-title"}).text
         self.author = bf.find('a').text
 
-        self.img_url_map = dict()###img_url_name:(img_url, epub_no)
+        self.img_url_map = dict()
         self.volume_no = volume_no
 
         self.epub_path = root_path
@@ -62,10 +55,8 @@ class Editer(object):
         os.makedirs(self.img_path, exist_ok=True)
 
 
-        self.error_last_chap_list = []
-
+        self.missing_last_chap_list = []
         
-
     """
     获取html文档内容
     """
@@ -96,7 +87,6 @@ class Editer(object):
         cata_html = restore_chars(cata_html)
         bf = BeautifulSoup(cata_html, 'html.parser')
         chap_html_list = bf.find('ol', {'id': 'volumes'}).find_all('li')
-        volume = {}
         volume_array = 0
         name = ''
         img_url = ''
@@ -115,9 +105,10 @@ class Editer(object):
                     else:
                         chap_names.append(chap_html.text)
                         chap_urls.append(url)
-        volume = {'name': name, 'chap_names': chap_names, 'chap_urls':chap_urls, 'img_url': img_url}
-        return volume
-        
+        self.volume = {'name': name, 'chap_names': chap_names, 'chap_urls':chap_urls, 'img_url': img_url}
+        # self.volume['img_url'] = 'cid'
+        # for ii in [0, 1, 2, 4]:
+        #    self.volume['chap_urls'][ii] = 'cid' 
     def get_page_text(self, content_html, is_color=False):
         bf = BeautifulSoup(content_html, 'html.parser')
         text_with_head = bf.find('div', {'id': 'ccacontent', 'class': 'bcontent'}) 
@@ -133,7 +124,6 @@ class Editer(object):
             if not img_url in self.img_url_map:
                 self.img_url_map[img_url] = str(len(self.img_url_map)).zfill(2)
             img_symbol = f'<p>[img:{self.img_url_map[img_url]}]</p>'
-            # print(img_symbol)
             if '00' in img_symbol:
                 text_html = text_html.replace(img_urlre, '')  #默认第一张为封面图片 不写入彩页
             else:
@@ -170,26 +160,24 @@ class Editer(object):
         return text_chap, next_chap_url
         
     
-    def get_text(self, volume):
+    def get_text(self):
         print('****************************')
-        img_url = volume['img_url']
+        img_url = self.volume['img_url']
         img_strs, del_index = [], []
         img_chap_name = '彩插'
         if img_url != '':
-            is_fix_next_chap_url = (img_chap_name in self.error_last_chap_list)
+            is_fix_next_chap_url = (img_chap_name in self.missing_last_chap_list)
             text, next_chap_url = self.get_chap_text(img_url, '彩页', is_color=True, return_next_chapter=is_fix_next_chap_url)
             if is_fix_next_chap_url: 
-                volume['chap_urls'][0] = next_chap_url
+                self.volume['chap_urls'][0] = next_chap_url #正向修复
             text_html_color = text2htmls(img_chap_name, text)
             
-        chap_names, chap_urls = volume['chap_names'], volume['chap_urls']
-        for chap_no, (chap_name, chap_url) in enumerate(zip(chap_names, chap_urls)):
+        for chap_no, (chap_name, chap_url) in enumerate(zip(self.volume['chap_names'], self.volume['chap_urls'])):
             
-            is_fix_next_chap_url = (chap_name in self.error_last_chap_list)
+            is_fix_next_chap_url = (chap_name in self.missing_last_chap_list)
             text, next_chap_url = self.get_chap_text(chap_url, chap_name, return_next_chapter=is_fix_next_chap_url)
-            # print('aaa', self.error_last_chap_list)
             if is_fix_next_chap_url: 
-                chap_urls[chap_no+1] = next_chap_url
+                self.volume['chap_urls'][chap_no+1] = next_chap_url #正向修复
             text_html = text2htmls(chap_name, text) 
             textfile = self.text_path + f'/{str(chap_no).zfill(2)}.xhtml'
             with open(textfile, 'w+', encoding='utf-8') as f:
@@ -217,16 +205,15 @@ class Editer(object):
             with open(textfile, 'w+', encoding='utf-8') as f:
                 f.writelines(text_html_color_new)
 
-    def buffer(self, volume):
+    def buffer(self):
         filename = 'buffer.pkl'
         filepath = os.path.join(self.temp_path, filename)
         if os.path.isfile(filepath):
             with open(filepath, 'rb') as f:
-                volume, self.img_url_map = pickle.load(f)
+                self.volume, self.img_url_map = pickle.load(f)
         else:
             with open(filepath, 'wb') as f:
-                pickle.dump((volume ,self.img_url_map), f)
-        return volume
+                pickle.dump((self.volume ,self.img_url_map), f)
     
     def is_buffer(self):
         filename = 'buffer.pkl'
@@ -266,16 +253,17 @@ class Editer(object):
         with open(textfile, 'w+', encoding='utf-8') as f:
             f.writelines(img_htmls)
 
-    def get_toc(self, volume):
-        toc_htmls = get_toc_html(self.title, volume["chap_names"])
+    def get_toc(self):
+        toc_htmls = get_toc_html(self.title, self.volume["chap_names"])
         textfile = self.temp_path + '/OEBPS/toc.ncx'
         with open(textfile, 'w+', encoding='utf-8') as f:
             f.writelines(toc_htmls)
 
-    def get_content(self, volume):
-        num_chap = len(volume["chap_names"])
+    def get_content(self):
+        num_chap = len(self.volume["chap_names"])
         num_img = len(os.listdir(self.img_path))
-        content_htmls = get_content_html(self.title + '-' + volume['name'], self.author, num_chap, num_img, volume)
+        img_exist = (self.volume['img_url'] != '')
+        content_htmls = get_content_html(self.title + '-' + self.volume['name'], self.author, num_chap, num_img, img_exist)
         textfile = self.temp_path + '/OEBPS/content.opf'
         with open(textfile, 'w+', encoding='utf-8') as f:
             f.writelines(content_htmls)
@@ -292,9 +280,9 @@ class Editer(object):
         with open(container, 'w+', encoding='utf-8') as f:
             f.writelines(container_htmls)
 
-    def get_epub(self, volume):
+    def get_epub(self):
         os.remove(os.path.join(self.temp_path, 'buffer.pkl'))
-        epub_file = self.epub_path + '/' + self.title + '-' + volume['name'] + '.epub'
+        epub_file = self.epub_path + '/' + self.title + '-' + self.volume['name'] + '.epub'
         with zipfile.ZipFile(epub_file, "w", zipfile.ZIP_DEFLATED) as zf:
             for dirpath, dirnames, filenames in os.walk(self.temp_path):
                 fpath = dirpath.replace(self.temp_path,'') #这一句很重要，不replace的话，就从根目录开始复制
@@ -304,37 +292,63 @@ class Editer(object):
         shutil.rmtree(self.temp_path)
         return epub_file
     
-    def check_volume(self, volume, is_gui=False, flag=None, signal=None, editline=None):
+    def check_volume(self, is_gui=False, signal=None, editline=None):
         
-        if self.check_url(volume['img_url']):
-            first_chap_url = volume['chap_urls'][0]
-            if self.check_url(first_chap_url): #插图和第一章链接都失效则需要手动输入
-                error_msg = f'章节\"插图\"连接失效，请手动输入该章节链接(手机版“{self.url_head}”开头的链接):'
-                if is_gui:
-                    print(error_msg)
-                    self.hang_flag = True
-                    signal.emit('hang')
-                    while self.hang_flag:
-                        time.sleep(1)
-                    volume['img_url'] = editline.text() 
-                else:
-                    volume['img_url'] = input(error_msg)
+        if self.check_url(self.volume['img_url']):
+            if self.check_url(self.volume['chap_urls'][0]) and (not self.prev_fix_url(0, len(self.volume['chap_names']))): #如果第一章失效则使用反向递归修复程序, 反向再失败则手
+                self.volume['img_url'] = self.hand_in_url('插图', is_gui, signal, editline)
             else:
-                content_html = self.get_html(first_chap_url, is_gbk=False)
-                img_url = self.url_head + re.search(r'prevpage="(.*?)"', content_html).group(1)
-                volume['img_url'] = img_url
+                self.volume['img_url'] = self.get_prev_url(0)
 
-        chap_names = volume['chap_names']
-        for url_no, url in enumerate(volume['chap_urls']):
+        chap_names = self.volume['chap_names']
+        for chap_no, url in enumerate(self.volume['chap_urls']):
             if self.check_url(url):
-                if url_no==0:
-                    self.error_last_chap_list.append('彩插')
-                else:
-                    self.error_last_chap_list.append(chap_names[url_no-1])
-        return volume
+                if not self.prev_fix_url(chap_no, len(self.volume['chap_names'])): #先尝试反向递归修复
+                    if chap_no==0: #第一章反向修复失败，有插图页则使用正向修复，没有插图页则采用手动修复
+                        if self.volume['img_url'] == '':
+                            self.volume['chap_urls'][0] = self.hand_in_url(chap_names[chap_no], is_gui, signal, editline)
+                        else:
+                            self.missing_last_chap_list.append('彩插')
+                    else: #其他章节反向修复失败则采用正向修复
+                        self.missing_last_chap_list.append(chap_names[chap_no-1])
+        # print(self.missing_last_chap_list)
     
     def check_url(self, url):
         return ('javascript' in url or 'cid' in url)   #当检测有问题返回True
+    
+    def get_prev_url(self, chap_no):
+        content_html = self.get_html(self.volume['chap_urls'][chap_no], is_gbk=False)
+        return self.url_head + re.search(r'prevpage="(.*?)"', content_html).group(1) 
+    
+    def prev_fix_url(self, chap_no, chap_num):  #正向递归修复缺失链接，若成功修复返回True，否则返回False 
+        if chap_no==chap_num-1: #最后一个章节直接选择不修复 返回False
+            return False
+        elif self.check_url(self.volume['chap_urls'][chap_no+1]):
+            if self.prev_fix_url(chap_no+1, chap_num):
+                self.volume['chap_urls'][chap_no] = self.get_prev_url(chap_no+1)
+                return True
+            else:
+                return False
+        else:
+            self.volume['chap_urls'][chap_no] = self.get_prev_url(chap_no+1)
+            return True
+            
+    def hand_in_url(self, chap_name, is_gui=False, signal=None, editline=None):
+        error_msg = f'章节\"{chap_name}\"连接失效，请手动输入该章节链接(手机版“{self.url_head}”开头的链接):'
+        if is_gui:
+            print(error_msg)
+            self.hang_flag = True
+            signal.emit('hang')
+            while self.hang_flag:
+                time.sleep(1)
+            url = editline.text() 
+        else:
+            url = input(error_msg)
+        return url
+        
+
+
+
 
         
 
@@ -344,36 +358,33 @@ if __name__=='__main__':
     if not args.no_input:
         args.book_no = input('请输入书籍号：')
         args.volume_no = int(input('请输入卷号：'))
-    
-    # args.book_no = 2342
-    # args.volume_no = 2
-
-    
+    # args.book_no = 26
+    # args.volume_no = 12
     editer = Editer(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
 
     print('正在获取书籍信息....')
-    volume = editer.get_index_url()
-    print(editer.title + '-' + volume['name'], editer.author)
+    editer.get_index_url()
+    print(editer.title + '-' + editer.volume['name'], editer.author)
     print('****************************')
     if not editer.is_buffer():
         print('正在下载文本....')
-        volume = editer.check_volume(volume)
-        editer.get_text(volume)
-        editer.buffer(volume)
+        editer.check_volume()
+        editer.get_text()
+        editer.buffer()
     else:
         print('检测到文本文件，直接下载插图')
-        volume = editer.buffer(volume)
+        editer.buffer()
 
     print('正在下载插图....')
     editer.get_image()
     
     print('正在编辑元数据....')
     editer.get_cover()
-    editer.get_toc(volume)
-    editer.get_content(volume)
+    editer.get_toc()
+    editer.get_content()
     editer.get_epub_head()
 
     print('正在生成电子书....')
-    epub_file = editer.get_epub(volume)
+    epub_file = editer.get_epub()
     print('生成成功！', f'电子书路径【{epub_file}】')
     

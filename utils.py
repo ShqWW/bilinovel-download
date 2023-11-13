@@ -72,7 +72,7 @@ def get_toc_html(title, chap_names):
     return toc_htmls
 
 
-def get_content_html(title, author, num_chap, num_img, volume):
+def get_content_html(title, author, num_chap, num_img, img_exist=False):
     content_htmls = []
     content_htmls.append('<?xml version=\"1.0\" encoding=\"utf-8\"?>\n')
     content_htmls.append('<package version=\"2.0\" unique-identifier=\"BookId\" xmlns=\"http://www.idpf.org/2007/opf\">\n')
@@ -86,7 +86,7 @@ def get_content_html(title, author, num_chap, num_img, volume):
     content_htmls.append('  <manifest>\n')
     content_htmls.append('    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>\n')
     content_htmls.append('    <item id="cover.xhtml" href="Text/cover.xhtml" media-type="application/xhtml+xml"/>\n')
-    if volume['img_url'] != '':
+    if img_exist:
         content_htmls.append('    <item id="xcolor" href="Text/color.xhtml" media-type="application/xhtml+xml"/>\n')
     for chap_no in range(num_chap):
         content_htmls.append('    <item id=\"x'+str(chap_no).zfill(2)+'.xhtml\" href=\"Text/'+ str(chap_no).zfill(2)+'.xhtml\" media-type=\"application/xhtml+xml\"/>\n')
