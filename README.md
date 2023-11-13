@@ -12,6 +12,7 @@
 
 
 [哔哩轻小说](https://www.bilinovel.com)(linovelib)网站小说下载，并转化为EPUB格式，黑白与彩色插图、目录与封面自动排版，支持多种阅读器。
+QQ群：563072544
 
 图形界面使用[PyQt-Fluent-Widgets](https://pyqt-fluent-widgets.readthedocs.io/en/latest/index.html)界面编写，fluent design风格，支持亮暗两种主题。
 
