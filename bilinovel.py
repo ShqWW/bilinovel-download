@@ -15,6 +15,7 @@ import re
 import pickle
 from PIL import Image
 import time
+import warnings
 
 def parse_args():
     """Parse input arguments."""
@@ -26,20 +27,31 @@ def parse_args():
     return args
 
 class Editer(object):
-    def __init__(self, root_path, head='https://www.bilinovel.com', book_no='0000', volume_no=1):
+    def __init__(self, root_path, head='https://www.bilinovel.com', secret_map=None, book_no='0000', volume_no=1):
         
-        # 设置headers是为了模拟浏览器访问 否则的话可能会被拒绝 可通过浏览器获取，这里不用修改
-        self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': "https://w.linovelib.com/"}
+        self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': head}
 
         self.url_head = head
         self.main_page = f'{self.url_head}/novel/{book_no}.html'
         self.cata_page = f'{self.url_head}/novel/{book_no}/catalog'
+        self.read_tool_page = f'{self.url_head}/themes/zhmb/js/readtool.js'
+        self.img_chap_name = '彩页'
+
+        
+        if secret_map == None:
+            self.get_secret_map()
+        else:
+            self.secret_map = secret_map
 
         main_html = self.get_html(self.main_page)
         bf = BeautifulSoup(main_html, 'html.parser')
         bf = bf.find('div', {'id': 'bookDetailWrapper'})
         self.title = bf.find('h2', {"class": "book-title"}).text
         self.author = bf.find('a').text
+        try:
+            self.cover_url = re.search(r'src=\"(.*?)\"', str(bf.find('img', {"class": "book-cover"}))).group(1)
+        except:
+            self.cover_url = 'cid'
 
         self.img_url_map = dict()
         self.volume_no = volume_no
@@ -56,10 +68,9 @@ class Editer(object):
 
 
         self.missing_last_chap_list = []
+        self.is_color_page = True
         
-    """
-    获取html文档内容
-    """
+    # 获取html文档内容
     def get_html(self, url, is_gbk=False):
         while True:
             try:
@@ -68,7 +79,6 @@ class Editer(object):
                     req.encoding = 'GBK'       #这里是网页的编码转换，根据网页的实际需要进行修改，经测试这个编码没有问题
                 break
             except Exception as e:
-                print('3', e)
                 time.sleep(random.choice(range(5, 10)))
         return req.text
     
@@ -78,13 +88,20 @@ class Editer(object):
                 req=requests.get(url, headers=self.header, timeout=5)
                 break
             except Exception as e:
-                # print('3', e)
                 pass
         return req.content
     
+    def get_secret_map(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            text = self.get_html(self.read_tool_page).encode('utf-8').decode('unicode_escape')
+        pattern = r'\(new window\[\"RegExp\"\]\(\"(.)\",\"gi\"\),\"(.)\"\)\[\'replace\'\]'
+        matches = re.findall(pattern, text)
+        self.secret_map = {match[0]:match[1] for match in matches}
+    
     def get_index_url(self):
         cata_html = self.get_html(self.cata_page, is_gbk=False)
-        cata_html = restore_chars(cata_html)
+        cata_html = self.restore_chars(cata_html)
         bf = BeautifulSoup(cata_html, 'html.parser')
         chap_html_list = bf.find('ol', {'id': 'volumes'}).find_all('li')
         volume_array = 0
@@ -100,24 +117,28 @@ class Editer(object):
             elif volume_array==self.volume_no:
                 if str(chap_html).startswith('<li class="chapter-li jsChapter">'):
                     url = self.url_head + chap_html.find('a').get('href')
-                    if chap_html.text == '插图':
+                    if chap_html.text == '插图' or chap_html.text == '图片':
                         img_url = url
                     else:
                         chap_names.append(chap_html.text)
                         chap_urls.append(url)
         self.volume = {'name': name, 'chap_names': chap_names, 'chap_urls':chap_urls, 'img_url': img_url}
-        # self.volume['img_url'] = 'cid'
-        # for ii in [0, 1, 2, 4]:
-        #    self.volume['chap_urls'][ii] = 'cid' 
-    def get_page_text(self, content_html, is_color=False):
+        if img_url == '' and (not self.check_url(self.cover_url)):  #没有彩页 但主页封面存在，将主页封面设为书籍封面
+            self.is_color_page = False
+            self.img_url_map[self.cover_url] = str(len(self.img_url_map)).zfill(2)
+            print('**************')
+            print('提示：没有彩页，但主页封面存在，将使用主页的封面图片作为本卷图书封面')
+            print('**************')
+
+    def get_page_text(self, content_html):
         bf = BeautifulSoup(content_html, 'html.parser')
         text_with_head = bf.find('div', {'id': 'ccacontent', 'class': 'bcontent'}) 
         text_html = str(text_with_head)
         img_urlre_list = re.findall(r"<img .*?>", text_html)
         for img_urlre in img_urlre_list:
-            img_url_full = re.search(r'.[a-zA-Z]{3}/(.*?).(jpg|png)', img_urlre)
+            img_url_full = re.search(r'.[a-zA-Z]{3}/(.*?).(jpg|png|jpeg)', img_urlre)
             img_url_name = img_url_full.group(1)
-            img_url_tail = img_url_full.group(0)[-3:]
+            img_url_tail = img_url_full.group(0).split('.')[-1]
             img_url = f'https://img3.readpai.com/{img_url_name}.{img_url_tail}'
 
             text_html = text_html.replace('<br/>\n' + img_urlre +'\n<br/>', img_urlre)
@@ -132,10 +153,10 @@ class Editer(object):
                 if text_html[symbol_index-1] != '\n':
                     text_html = text_html[:symbol_index] + '\n' + text_html[symbol_index:]
         text = BeautifulSoup(text_html, 'html.parser').get_text()
-        text = restore_chars(text)
+        text = self.restore_chars(text)
         return text
     
-    def get_chap_text(self, url, chap_name, is_color=False, return_next_chapter=False):
+    def get_chap_text(self, url, chap_name, return_next_chapter=False):
         text_chap = ''
         page_no = 1 
         url_ori = url
@@ -147,7 +168,7 @@ class Editer(object):
                 str_out = f'    正在下载第{page_no}页......'
             print(str_out)
             content_html = self.get_html(url, is_gbk=False)
-            text = self.get_page_text(content_html, is_color=is_color)
+            text = self.get_page_text(content_html)
             text_chap += text
             url_new = url_ori.replace('.html', '_{}.html'.format(page_no+1))[len(self.url_head):]
             if url_new in content_html:
@@ -158,22 +179,18 @@ class Editer(object):
                     next_chap_url = self.url_head + re.search(r'nextpage="(.*?)"', content_html).group(1)
                 break
         return text_chap, next_chap_url
-        
     
     def get_text(self):
         print('****************************')
-        img_url = self.volume['img_url']
-        img_strs, del_index = [], []
-        img_chap_name = '彩插'
-        if img_url != '':
-            is_fix_next_chap_url = (img_chap_name in self.missing_last_chap_list)
-            text, next_chap_url = self.get_chap_text(img_url, '彩页', is_color=True, return_next_chapter=is_fix_next_chap_url)
+        img_strs = []
+        if self.is_color_page:
+            is_fix_next_chap_url = (self.img_chap_name in self.missing_last_chap_list)
+            text, next_chap_url = self.get_chap_text(self.volume['img_url'], self.img_chap_name, return_next_chapter=is_fix_next_chap_url)
             if is_fix_next_chap_url: 
                 self.volume['chap_urls'][0] = next_chap_url #正向修复
-            text_html_color = text2htmls(img_chap_name, text)
+            text_html_color = text2htmls(self.img_chap_name, text)
             
         for chap_no, (chap_name, chap_url) in enumerate(zip(self.volume['chap_names'], self.volume['chap_urls'])):
-            
             is_fix_next_chap_url = (chap_name in self.missing_last_chap_list)
             text, next_chap_url = self.get_chap_text(chap_url, chap_name, return_next_chapter=is_fix_next_chap_url)
             if is_fix_next_chap_url: 
@@ -190,7 +207,7 @@ class Editer(object):
         print('****************************')
         
         # 将彩页中后文已经出现的图片删除，避免重复
-        if img_url!='': #判断彩页是否存在
+        if self.is_color_page: #判断彩页是否存在
             text_html_color_new = []
             textfile = self.text_path + '/color.xhtml'
             for text_line in text_html_color: 
@@ -204,21 +221,6 @@ class Editer(object):
         
             with open(textfile, 'w+', encoding='utf-8') as f:
                 f.writelines(text_html_color_new)
-
-    def buffer(self):
-        filename = 'buffer.pkl'
-        filepath = os.path.join(self.temp_path, filename)
-        if os.path.isfile(filepath):
-            with open(filepath, 'rb') as f:
-                self.volume, self.img_url_map = pickle.load(f)
-        else:
-            with open(filepath, 'wb') as f:
-                pickle.dump((self.volume ,self.img_url_map), f)
-    
-    def is_buffer(self):
-        filename = 'buffer.pkl'
-        filepath = os.path.join(self.temp_path, filename)
-        return os.path.isfile(filepath)
 
     def get_image(self, is_gui=False, signal=None):
         img_path = self.img_path
@@ -308,19 +310,19 @@ class Editer(object):
                         if self.volume['img_url'] == '':
                             self.volume['chap_urls'][0] = self.hand_in_url(chap_names[chap_no], is_gui, signal, editline)
                         else:
-                            self.missing_last_chap_list.append('彩插')
+                            self.missing_last_chap_list.append(self.img_chap_name)
                     else: #其他章节反向修复失败则采用正向修复
                         self.missing_last_chap_list.append(chap_names[chap_no-1])
         # print(self.missing_last_chap_list)
     
-    def check_url(self, url):
-        return ('javascript' in url or 'cid' in url)   #当检测有问题返回True
+    def check_url(self, url):#当检测有问题返回True
+        return ('javascript' in url or 'cid' in url)   
     
-    def get_prev_url(self, chap_no):
+    def get_prev_url(self, chap_no): #获取前一个章节的链接
         content_html = self.get_html(self.volume['chap_urls'][chap_no], is_gbk=False)
         return self.url_head + re.search(r'prevpage="(.*?)"', content_html).group(1) 
     
-    def prev_fix_url(self, chap_no, chap_num):  #正向递归修复缺失链接，若成功修复返回True，否则返回False 
+    def prev_fix_url(self, chap_no, chap_num):  #反向递归修复缺失链接（后修复前），若成功修复返回True，否则返回False 
         if chap_no==chap_num-1: #最后一个章节直接选择不修复 返回False
             return False
         elif self.check_url(self.volume['chap_urls'][chap_no+1]):
@@ -345,6 +347,34 @@ class Editer(object):
         else:
             url = input(error_msg)
         return url
+    
+    # 恢复函数，根据secret_map进行恢复
+    def restore_chars(self, text):
+        restored_text = ""
+        i = 0
+        while i < len(text):
+            char = text[i]
+            if char in self.secret_map:
+                    restored_text += self.secret_map[char]
+            else:
+                    restored_text += char
+            i += 1
+        return restored_text
+    
+    def buffer(self):
+        filename = 'buffer.pkl'
+        filepath = os.path.join(self.temp_path, filename)
+        if os.path.isfile(filepath):
+            with open(filepath, 'rb') as f:
+                self.volume, self.img_url_map = pickle.load(f)
+        else:
+            with open(filepath, 'wb') as f:
+                pickle.dump((self.volume ,self.img_url_map), f)
+    
+    def is_buffer(self):
+        filename = 'buffer.pkl'
+        filepath = os.path.join(self.temp_path, filename)
+        return os.path.isfile(filepath)
         
 
 
@@ -361,6 +391,7 @@ if __name__=='__main__':
     # args.book_no = 26
     # args.volume_no = 12
     editer = Editer(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
+    
 
     print('正在获取书籍信息....')
     editer.get_index_url()

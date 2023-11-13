@@ -2,8 +2,7 @@
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRegExp
 from PyQt5.QtGui import QIcon, QFont, QTextCursor, QPixmap, QColor,QRegExpValidator
 from PyQt5.QtWidgets import QApplication, QFrame, QGridLayout, QFileDialog
-from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, ExpandLayout, TextEdit, ImageLabel, LineEdit, PushButton, Theme,
-                            ProgressRing, setTheme, Theme, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor, qconfig)
+from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, ExpandLayout, TextEdit, ImageLabel, LineEdit, PushButton, Theme, ProgressRing, setTheme, Theme, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor, qconfig)
 from qfluentwidgets import FluentIcon as FIF
 import sys
 import base64
@@ -47,7 +46,6 @@ class MainThread(QThread):
 
             print('正在生成电子书....')
             epub_file = self.parent.editer.get_epub()
-            self.parent.clear_signal.emit('')
             print('生成成功！')
             print(f'电子书路径【{epub_file}】')
 
