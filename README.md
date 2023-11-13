@@ -29,7 +29,7 @@ PS：暂不支持漫画的排版，后续会开新坑专门支持漫画
 ```
 pip install -r requirements.txt -i https://pypi.org/simple/
 ```
-## 使用命令行模式运行:
+## 使用命令行模式运行(无需安装图形界面库，支持Linux):
 ```
 python bilinovel.py
 ```
