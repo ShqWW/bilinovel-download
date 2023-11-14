@@ -19,6 +19,8 @@ def query_chaps(book_no):
     print(editer.title, editer.author)
     print('*******************************')
     editer.get_chap_list()
+    print('*******************************')
+    print('请输入所需要的卷号进行下载（多卷可以用英文逗号分隔或直接使用连字符，详情见说明）')
 
 def download_single_volume(root_path,
                            book_no,
