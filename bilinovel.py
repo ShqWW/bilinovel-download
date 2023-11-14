@@ -108,11 +108,6 @@ def downloader_router(root_path,
     else:
         download_single_volume(root_path, book_no, volume_no, is_gui, hang_signal, progressring_signal, cover_signal, edit_line_hang)
     
-    
-
-
-
-    
 if __name__=='__main__':
     args = parse_args()
     download_path = os.path.join(os.path.expanduser('~'), 'Downloads')
