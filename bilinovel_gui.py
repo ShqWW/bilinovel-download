@@ -122,7 +122,7 @@ class HomeWidget(QFrame):
         
         self.book_icon = QPixmap()
         self.book_icon.loadFromData(base64.b64decode(book_base64))
-        self.cover_w, self.cover_h = 132, 192
+        self.cover_w, self.cover_h = 145, 230
 
         self.label_cover = ImageLabel(self.book_icon, self)
         self.label_cover.setFixedSize(self.cover_w, self.cover_h)
@@ -165,9 +165,9 @@ class HomeWidget(QFrame):
 
         self.gridLayout.addLayout(self.screen_layout, 3, 0, 2, 2)
 
-        self.screen_layout.addWidget(self.progressRing, 0, 0, 1, 1, Qt.AlignHCenter|Qt.AlignBottom)
-        self.screen_layout.addWidget(self.text_screen, 0, 0, 2, 1)
-        self.screen_layout.addWidget(self.label_cover, 0, 1, 1, 1, Qt.AlignTop)
+        self.screen_layout.addWidget(self.progressRing, 0, 0, Qt.AlignHCenter|Qt.AlignBottom)
+        self.screen_layout.addWidget(self.text_screen, 0, 0)
+        self.screen_layout.addWidget(self.label_cover, 0, 1)
         
         
 
@@ -276,7 +276,7 @@ class Window(FluentWindow):
         self.out_path = os.path.join(os.path.expanduser('~'), 'Downloads')
         self.head = 'https://www.bilinovel.com'
         split_str = '**************************************\n    '
-        self.welcome_text = f'使用说明（必看）：\n{split_str}1.哔哩轻小说{self.head}下载，根据书籍网址输入书号以及下载的卷号。\n{split_str}2.例如小说网址是{self.head}/novel/2704.html，则书号输入2704。\n{split_str}3.要查看书籍卷号等信息，则可以不输入书籍卷号，点击确认会返回书籍目录和卷编号。\n{split_str}4.根据上一步返回的信息确定自己想下载的卷号，要下载编号2对应卷，则卷号输入2。想下载多卷比如1-3对应卷，则卷号输入1-3或1,2,3（英文逗号分隔，编号可以不连续）并点击确认。\n{split_str}5.书号最多输入4位阿拉伯数字，卷号最多输入2位阿拉伯数字。'
+        self.welcome_text = f'使用说明（必看）：\n{split_str}1.哔哩轻小说{self.head}，根据书籍网址输入书号以及下载的卷号，书号最多输入4位阿拉伯数字。\n{split_str}2.例如小说网址是{self.head}/novel/2704.html，则书号输入2704。\n{split_str}3.要查看书籍卷号等信息，则可以不输入书籍卷号，点击确认会返回书籍目录和卷编号。\n{split_str}4.根据上一步返回的信息确定自己想下载的卷号，要下载编号2对应卷，则卷号输入2。想下载多卷比如1-3对应卷，则卷号输入1-3或1,2,3（英文逗号分隔，编号可以不连续）并点击确认。'
         self.homeInterface = HomeWidget('Home Interface', self)
         self.settingInterface = SettingWidget('Setting Interface', self)
         self.initNavigation()
@@ -287,7 +287,7 @@ class Window(FluentWindow):
         self.addSubInterface(self.settingInterface, FIF.SETTING, '设置', NavigationItemPosition.BOTTOM)
 
     def initWindow(self):
-        self.resize(700, 300)
+        self.resize(700, 490)
         pixmap = QPixmap()
         pixmap.loadFromData(base64.b64decode(logo_base64))
         self.setWindowIcon(QIcon(pixmap))
