@@ -12,7 +12,7 @@ from resource.book import book_base64
 from bilinovel import *
 
 font_label = QFont('微软雅黑', 18)
-font_msg = QFont('微软雅黑', 11)
+font_msg = QFont('微软雅黑', 10)
 
 class MainThread(QThread):
     def __init__(self, parent):
@@ -20,35 +20,11 @@ class MainThread(QThread):
         self.parent = parent
         
     def run(self):
+        self.parent.clear_signal.emit('')
         try:
-            self.parent.clear_signal.emit('')
-            print('正在获取书籍信息....')
-            self.parent.editer.get_index_url()
-            print(self.parent.editer.title + '-' + self.parent.editer.volume['name'], self.parent.editer.author)
-            print('****************************')
-            if not self.parent.editer.is_buffer():
-                print('正在下载文本....')
-                self.parent.editer.check_volume(is_gui=True, signal=self.parent.hang_signal, editline=self.parent.editline_hang)
-                self.parent.editer.get_text()
-                self.parent.editer.buffer()
-            else:
-                print('检测到文本文件，直接下载插图')
-                self.parent.editer.buffer()
-            
-            print('正在下载插图....')
-            self.parent.editer.get_image(is_gui=True, signal=self.parent.progressring_signal)
-
-            print('正在编辑元数据....')
-            self.parent.editer.get_cover(is_gui=True, signal = self.parent.cover_signal)
-            self.parent.editer.get_toc()
-            self.parent.editer.get_content()
-            self.parent.editer.get_epub_head()
-
-            print('正在生成电子书....')
-            epub_file = self.parent.editer.get_epub()
-            print('生成成功！')
-            print(f'电子书路径【{epub_file}】')
-
+            book_no = self.parent.editline_book.text()
+            volumn_no = self.parent.editline_volumn.text()
+            downloader_router(self.parent.parent.out_path, book_no, volumn_no, True, self.parent.hang_signal, self.parent.progressring_signal, self.parent.cover_signal, self.parent.editline_hang)
             self.parent.end_signal.emit('')
         except Exception as e:
             self.parent.end_signal.emit('')
@@ -136,17 +112,17 @@ class HomeWidget(QFrame):
         self.editline_volumn = LineEdit(self) 
         validator = QRegExpValidator(QRegExp("\\d+"))  # 正则表达式匹配阿拉伯数字
         self.editline_book.setValidator(validator)
-        self.editline_volumn.setValidator(validator)
+        # self.editline_volumn.setValidator(validator)
 
         self.editline_book.setMaxLength(4)
-        self.editline_volumn.setMaxLength(2)
+        # self.editline_volumn.setMaxLength(2)
         
         # self.editline_book.setText('2059')
         # self.editline_volumn.setText('3')
         
         self.book_icon = QPixmap()
         self.book_icon.loadFromData(base64.b64decode(book_base64))
-        self.cover_w, self.cover_h = 110, 160
+        self.cover_w, self.cover_h = 132, 192
 
         self.label_cover = ImageLabel(self.book_icon, self)
         self.label_cover.setFixedSize(self.cover_w, self.cover_h)
@@ -189,9 +165,11 @@ class HomeWidget(QFrame):
 
         self.gridLayout.addLayout(self.screen_layout, 3, 0, 2, 2)
 
-        self.screen_layout.addWidget(self.text_screen, 0, 0)
-        self.screen_layout.addWidget(self.label_cover, 0, 1)
-        self.screen_layout.addWidget(self.progressRing, 0, 2)
+        self.screen_layout.addWidget(self.progressRing, 0, 0, 1, 1, Qt.AlignHCenter|Qt.AlignBottom)
+        self.screen_layout.addWidget(self.text_screen, 0, 0, 2, 1)
+        self.screen_layout.addWidget(self.label_cover, 0, 1, 1, 1, Qt.AlignTop)
+        
+        
 
         self.gridLayout.addLayout(self.hang_layout, 5, 0, 1, 2)
         self.hang_layout.addWidget(self.editline_hang, 0, 0)
@@ -228,19 +206,6 @@ class HomeWidget(QFrame):
         self.btn_run.setEnabled(False)
         self.btn_run.setText('正在下载')
         self.btn_stop.setEnabled(True)
-        self.clear_signal.emit('')
-        book_no = self.editline_book.text()
-        volumn_no = self.editline_volumn.text()
-        if len(book_no)==0 or len(volumn_no)==0 or int(volumn_no)<1:
-            print('请检查输入是否完整正确！')
-            self.end_signal.emit('')
-            return
-        try:
-            self.editer = Editer(root_path=self.parent.out_path, head=self.parent.head, book_no=book_no, volume_no=int(volumn_no))
-        except Exception as e:
-            print(e)
-            self.end_signal.emit('')
-            return
         self.main_thread = MainThread(self)
         self.main_thread.start()
         
@@ -261,10 +226,13 @@ class HomeWidget(QFrame):
         
     def outputWritten(self, text):
         cursor = self.text_screen.textCursor()
+        scrollbar=self.text_screen.verticalScrollBar()
+        is_bottom = (scrollbar.value()>=scrollbar.maximum() -4)
         cursor.movePosition(QTextCursor.End)
         cursor.insertText(text)
-        self.text_screen.setTextCursor(cursor)
-        self.text_screen.ensureCursorVisible()
+        if is_bottom:
+            self.text_screen.setTextCursor(cursor)
+        # self.text_screen.ensureCursorVisible()
     
     def clear_screen(self):
         self.text_screen.clear()
@@ -307,7 +275,8 @@ class Window(FluentWindow):
 
         self.out_path = os.path.join(os.path.expanduser('~'), 'Downloads')
         self.head = 'https://www.bilinovel.com'
-        self.welcome_text = f'    搜索小说请登录哔哩轻小说手机版{self.head}，查询后请根据书籍网址输入书号，并根据需要输入下载的卷号（卷号是按照网页的顺序，非实际出版顺序）。\n    例如小说网址是{self.head}/novel/2704.html，要下载第二卷，则书号输入2704，卷号输入2。\n    书号最多输入4位阿拉伯数字，卷号最多输入2位阿拉伯数字。'
+        split_str = '**************************************\n    '
+        self.welcome_text = f'使用说明（必看）：\n{split_str}1.哔哩轻小说{self.head}下载，根据书籍网址输入书号以及下载的卷号。\n{split_str}2.例如小说网址是{self.head}/novel/2704.html，则书号输入2704。\n{split_str}3.要查看书籍卷号等信息，则可以不输入书籍卷号，点击确认会返回书籍目录和卷编号。\n{split_str}4.根据上一步返回的信息确定自己想下载的卷号，要下载编号2对应卷，则卷号输入2。想下载多卷比如1-3对应卷，则卷号输入1-3或1,2,3（英文逗号分隔，编号可以不连续）并点击确认。\n{split_str}5.书号最多输入4位阿拉伯数字，卷号最多输入2位阿拉伯数字。'
         self.homeInterface = HomeWidget('Home Interface', self)
         self.settingInterface = SettingWidget('Setting Interface', self)
         self.initNavigation()
@@ -318,7 +287,7 @@ class Window(FluentWindow):
         self.addSubInterface(self.settingInterface, FIF.SETTING, '设置', NavigationItemPosition.BOTTOM)
 
     def initWindow(self):
-        self.resize(600, 355)
+        self.resize(700, 300)
         pixmap = QPixmap()
         pixmap.loadFromData(base64.b64decode(logo_base64))
         self.setWindowIcon(QIcon(pixmap))
