@@ -122,7 +122,7 @@ class HomeWidget(QFrame):
         
         self.book_icon = QPixmap()
         self.book_icon.loadFromData(base64.b64decode(book_base64))
-        self.cover_w, self.cover_h = 145, 230
+        self.cover_w, self.cover_h = 152, 230
 
         self.label_cover = ImageLabel(self.book_icon, self)
         self.label_cover.setFixedSize(self.cover_w, self.cover_h)
@@ -287,7 +287,7 @@ class Window(FluentWindow):
         self.addSubInterface(self.settingInterface, FIF.SETTING, '设置', NavigationItemPosition.BOTTOM)
 
     def initWindow(self):
-        self.resize(700, 490)
+        self.resize(700, 460)
         pixmap = QPixmap()
         pixmap.loadFromData(base64.b64decode(logo_base64))
         self.setWindowIcon(QIcon(pixmap))
