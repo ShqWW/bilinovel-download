@@ -32,7 +32,6 @@ def download_single_volume(root_path,
                            edit_line_hang=None):
     
     editer = Editer(root_path=root_path, book_no=book_no, volume_no=volume_no)
-    print('正在获取书籍信息....')
     editer.get_index_url()
     print(editer.title + '-' + editer.volume['name'], editer.author)
     print('****************************')
@@ -101,10 +100,11 @@ def downloader_router(root_path,
     else:
             print('请检查输入是否完整正确！')
             return
-    print('正在勤奋地搜索小说.............')
+    print('正在积极地获取书籍信息....')
     if is_multi_chap:
         for volume_no in volume_no_list:
             download_single_volume(root_path, book_no, volume_no, is_gui, hang_signal, progressring_signal, cover_signal, edit_line_hang)
+        print('所有下载任务都已经完成')
     else:
         download_single_volume(root_path, book_no, volume_no, is_gui, hang_signal, progressring_signal, cover_signal, edit_line_hang)
     

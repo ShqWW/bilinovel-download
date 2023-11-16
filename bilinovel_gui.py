@@ -135,7 +135,7 @@ class HomeWidget(QFrame):
         self.progressRing = ProgressRing(self)
         self.progressRing.setValue(0)
         self.progressRing.setTextVisible(True)
-        self.progressRing.setFixedSize(55, 55)
+        self.progressRing.setFixedSize(50, 50)
         
         self.btn_run = PushButton('确定', self)
         self.btn_run.setShortcut(Qt.Key_Return)
