@@ -104,7 +104,7 @@ def downloader_router(root_path,
     if is_multi_chap:
         for volume_no in volume_no_list:
             download_single_volume(root_path, book_no, volume_no, is_gui, hang_signal, progressring_signal, cover_signal, edit_line_hang)
-        print('所有下载任务都已经完成')
+        print('所有下载任务都已经完成！')
     else:
         download_single_volume(root_path, book_no, volume_no, is_gui, hang_signal, progressring_signal, cover_signal, edit_line_hang)
     
