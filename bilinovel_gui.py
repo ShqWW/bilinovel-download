@@ -135,7 +135,7 @@ class HomeWidget(QFrame):
         self.progressRing = ProgressRing(self)
         self.progressRing.setValue(0)
         self.progressRing.setTextVisible(True)
-        self.progressRing.setFixedSize(45, 45)
+        self.progressRing.setFixedSize(55, 55)
         
         self.btn_run = PushButton('确定', self)
         self.btn_run.setShortcut(Qt.Key_Return)
@@ -245,6 +245,8 @@ class HomeWidget(QFrame):
         
     def progressring_msg(self, input):
         if input == 'start':
+            self.label_cover.setImage(self.book_icon)
+            self.label_cover.setFixedSize(self.cover_w, self.cover_h)
             self.progressRing.setValue(0)
             self.progressRing.show()
         elif input == 'end':
