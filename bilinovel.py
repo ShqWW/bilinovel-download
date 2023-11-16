@@ -101,7 +101,7 @@ def downloader_router(root_path,
     else:
             print('请检查输入是否完整正确！')
             return
-    
+    print('正在勤奋地搜索小说.............')
     if is_multi_chap:
         for volume_no in volume_no_list:
             download_single_volume(root_path, book_no, volume_no, is_gui, hang_signal, progressring_signal, cover_signal, edit_line_hang)
