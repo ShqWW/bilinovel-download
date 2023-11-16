@@ -49,7 +49,8 @@ class Editer(object):
         self.volume_no = volume_no
 
         self.epub_path = root_path
-        self.temp_path = os.path.join(self.epub_path,  'temp_'+ self.title + '_' + str(self.volume_no))
+        self.temp_path = check_chars(os.path.join(self.epub_path,  'temp_'+ self.title + '_' + str(self.volume_no)))
+    
 
 
         self.missing_last_chap_list = []
@@ -292,7 +293,7 @@ class Editer(object):
 
     def get_epub(self):
         os.remove(os.path.join(self.temp_path, 'buffer.pkl'))
-        epub_file = self.epub_path + '/' + self.title + '-' + self.volume['name'] + '.epub'
+        epub_file = check_chars(self.epub_path + '/' + self.title + '-' + self.volume['name'] + '.epub')
         with zipfile.ZipFile(epub_file, "w", zipfile.ZIP_DEFLATED) as zf:
             for dirpath, dirnames, filenames in os.walk(self.temp_path):
                 fpath = dirpath.replace(self.temp_path,'') #这一句很重要，不replace的话，就从根目录开始复制

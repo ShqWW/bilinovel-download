@@ -137,3 +137,13 @@ def get_color_html(colorimg_num):
     color_htmls.append('</body>\n')
     color_htmls.append('</html>')
     return color_htmls
+
+def check_chars(win_chars):
+    win_illegal_chars = '?*"<>|'
+    new_chars = ''
+    for char in win_chars:
+        if char in win_illegal_chars:
+            new_chars += '.'
+        else:
+            new_chars += char
+    return new_chars
