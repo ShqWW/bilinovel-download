@@ -12,7 +12,7 @@ from resource.book import book_base64
 from bilinovel import *
 
 font_label = QFont('微软雅黑', 18)
-font_msg = QFont('微软雅黑', 10)
+font_msg = QFont('微软雅黑', 11)
 
 class MainThread(QThread):
     def __init__(self, parent):
@@ -125,6 +125,7 @@ class HomeWidget(QFrame):
         self.cover_w, self.cover_h = 152, 230
 
         self.label_cover = ImageLabel(self.book_icon, self)
+        self.label_cover.setBorderRadius(5, 5, 5, 5)
         self.label_cover.setFixedSize(self.cover_w, self.cover_h)
 
         self.text_screen = TextEdit()
@@ -134,9 +135,9 @@ class HomeWidget(QFrame):
         self.progressRing = ProgressRing(self)
         self.progressRing.setValue(0)
         self.progressRing.setTextVisible(True)
-        self.progressRing.setFixedSize(60, 60)
+        self.progressRing.setFixedSize(45, 45)
         
-        self.btn_run = PushButton('开始下载', self)
+        self.btn_run = PushButton('确定', self)
         self.btn_run.setShortcut(Qt.Key_Return)
         self.btn_stop = PushButton('取消', self)
         self.btn_hang = PushButton('确定', self)
@@ -165,7 +166,7 @@ class HomeWidget(QFrame):
 
         self.gridLayout.addLayout(self.screen_layout, 3, 0, 2, 2)
 
-        self.screen_layout.addWidget(self.progressRing, 0, 0, Qt.AlignHCenter|Qt.AlignBottom)
+        self.screen_layout.addWidget(self.progressRing, 0, 1, Qt.AlignLeft|Qt.AlignBottom)
         self.screen_layout.addWidget(self.text_screen, 0, 0)
         self.screen_layout.addWidget(self.label_cover, 0, 1)
         
@@ -237,9 +238,10 @@ class HomeWidget(QFrame):
     def clear_screen(self):
         self.text_screen.clear()
     
-    def display_cover(self, filepath):
+    def display_cover(self, signal_msg):
+        filepath, img_h, img_w = signal_msg
         self.label_cover.setImage(filepath)
-        self.label_cover.setFixedSize(self.cover_w, self.cover_h)
+        self.label_cover.setFixedSize(int(img_w*self.cover_h/img_h), self.cover_h)
         
     def progressring_msg(self, input):
         if input == 'start':
@@ -276,7 +278,7 @@ class Window(FluentWindow):
         self.out_path = os.path.join(os.path.expanduser('~'), 'Downloads')
         self.head = 'https://www.bilinovel.com'
         split_str = '**************************************\n    '
-        self.welcome_text = f'使用说明（必看）：\n{split_str}1.哔哩轻小说{self.head}，根据书籍网址输入书号以及下载的卷号，书号最多输入4位阿拉伯数字。\n{split_str}2.例如小说网址是{self.head}/novel/2704.html，则书号输入2704。\n{split_str}3.要查看书籍卷号等信息，则可以不输入书籍卷号，点击确认会返回书籍目录和卷编号。\n{split_str}4.根据上一步返回的信息确定自己想下载的卷号，要下载编号2对应卷，则卷号输入2。想下载多卷比如1-3对应卷，则卷号输入1-3或1,2,3（英文逗号分隔，编号可以不连续）并点击确认。'
+        self.welcome_text = f'使用说明（共4条，记得下拉）：\n{split_str}1.哔哩轻小说{self.head}，根据书籍网址输入书号以及下载的卷号，书号最多输入4位阿拉伯数字。\n{split_str}2.例如小说网址是{self.head}/novel/2704.html，则书号输入2704。\n{split_str}3.要查询书籍卷号卷名等信息，则可以只输入书号不输入卷号，点击确定会返回书籍卷名称和对应的卷号。\n{split_str}4.根据上一步返回的信息确定自己想下载的卷号，要下载编号[2]对应卷，则卷号输入2。想下载多卷比如[1]至[3]对应卷，则卷号输入1-3或1,2,3（英文逗号分隔，编号也可以不连续）并点击确定。'
         self.homeInterface = HomeWidget('Home Interface', self)
         self.settingInterface = SettingWidget('Setting Interface', self)
         self.initNavigation()

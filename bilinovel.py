@@ -48,7 +48,7 @@ def download_single_volume(root_path,
         editer.buffer()
     
 
-    print('正在下载插图....')
+    print('正在下载插图.....................................')
     editer.get_image(is_gui=is_gui, signal=progressring_signal)
     
     print('正在编辑元数据....')

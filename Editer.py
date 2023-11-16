@@ -255,8 +255,9 @@ class Editer(object):
             imgfile = os.path.join(self.img_path, '00.jpg')
             img = Image.open(imgfile)
             img_w, img_h = img.size
+            signal_msg = (imgfile, img_h, img_w)
             if is_gui:
-                signal.emit(imgfile)
+                signal.emit(signal_msg)
         except Exception as e:
             print(e)
             print('没有封面图片，请自行用第三方EPUB编辑器手动添加封面')
@@ -376,6 +377,10 @@ class Editer(object):
         if os.path.isfile(filepath):
             with open(filepath, 'rb') as f:
                 self.volume, self.img_url_map = pickle.load(f)
+                self.text_path = os.path.join(self.temp_path, 'OEBPS/Text')
+                os.makedirs(self.text_path, exist_ok=True)
+                self.img_path = os.path.join(self.temp_path,  'OEBPS/Images')
+                os.makedirs(self.img_path, exist_ok=True)
         else:
             with open(filepath, 'wb') as f:
                 pickle.dump((self.volume ,self.img_url_map), f)
