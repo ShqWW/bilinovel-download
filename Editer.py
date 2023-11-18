@@ -27,6 +27,7 @@ class Editer(object):
         self.main_page = f'{self.url_head}/novel/{book_no}.html'
         self.cata_page = f'{self.url_head}/novel/{book_no}/catalog'
         self.read_tool_page = f'{self.url_head}/themes/zhmb/js/readtool.js'
+        
         self.img_chap_name = '彩页'
 
         
@@ -84,6 +85,8 @@ class Editer(object):
         pattern = r'\(new window\[\"RegExp\"\]\(\"(.)\",\"gi\"\),\"(.)\"\)\[\'replace\'\]'
         matches = re.findall(pattern, text)
         self.secret_map = {match[0]:match[1] for match in matches}
+        self.secret_map['\ue825'] = '唇'
+        # print(self.secret_map, len(self.secret_map))
     
     def make_folder(self):
         os.makedirs(self.temp_path, exist_ok=True)
