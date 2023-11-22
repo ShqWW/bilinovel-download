@@ -146,7 +146,7 @@ class Editer(object):
 
     def get_page_text(self, content_html):
         bf = BeautifulSoup(content_html, 'html.parser')
-        text_with_head = bf.find('div', {'id': 'ccacontent', 'class': 'bcontent'}) 
+        text_with_head = bf.find('div', {'id': 'acontentz', 'class': 'bcontent'}) 
         text_html = str(text_with_head)
         img_urlre_list = re.findall(r"<img .*?>", text_html)
         for img_urlre in img_urlre_list:
