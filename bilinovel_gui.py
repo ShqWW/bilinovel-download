@@ -2,7 +2,7 @@
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRegExp
 from PyQt5.QtGui import QIcon, QFont, QTextCursor, QPixmap, QColor,QRegExpValidator
 from PyQt5.QtWidgets import QApplication, QFrame, QGridLayout, QFileDialog
-from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, ExpandLayout, TextEdit, ImageLabel, LineEdit, PushButton, Theme, ProgressRing, setTheme, Theme, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor, qconfig)
+from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, ExpandLayout, TextEdit, ImageLabel, LineEdit, PushButton, Theme, ProgressRing, setTheme, Theme, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor, qconfig, EditableComboBox)
 from qfluentwidgets import FluentIcon as FIF
 import sys
 import base64
@@ -125,7 +125,7 @@ class HomeWidget(QFrame):
         self.cover_w, self.cover_h = 152, 230
 
         self.label_cover = ImageLabel(self.book_icon, self)
-        self.label_cover.setBorderRadius(5, 5, 5, 5)
+        self.label_cover.setBorderRadius(8, 8, 8, 8)
         self.label_cover.setFixedSize(self.cover_w, self.cover_h)
 
         self.text_screen = TextEdit()
@@ -142,7 +142,7 @@ class HomeWidget(QFrame):
         self.btn_stop = PushButton('取消', self)
         self.btn_hang = PushButton('确定', self)
         
-        self.editline_hang = LineEdit(self)
+        self.editline_hang = EditableComboBox(self)
         self.gridLayout = QGridLayout(self)
         self.screen_layout = QGridLayout()
         self.btn_layout = QGridLayout()
@@ -261,10 +261,10 @@ class HomeWidget(QFrame):
         self.editline_hang.show()
     
     def process_continue(self, input=None):
-        self.editer.hang_flag=False
         self.btn_hang.hide()
         self.btn_hang.setEnabled(False)
         self.editline_hang.hide()
+        
     
     def process_stop(self):
         self.main_thread.terminate()

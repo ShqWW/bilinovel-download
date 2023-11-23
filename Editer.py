@@ -27,7 +27,7 @@ class Editer(object):
         self.main_page = f'{self.url_head}/novel/{book_no}.html'
         self.cata_page = f'{self.url_head}/novel/{book_no}/catalog'
         self.read_tool_page = f'{self.url_head}/themes/zhmb/js/readtool.js'
-        
+        self.color_page_name = '插图'
         self.img_chap_name = '彩页'
 
         
@@ -85,7 +85,12 @@ class Editer(object):
         pattern = r'\(new window\[\"RegExp\"\]\(\"(.)\",\"gi\"\),\"(.)\"\)\[\'replace\'\]'
         matches = re.findall(pattern, text)
         self.secret_map = {match[0]:match[1] for match in matches}
-        self.secret_map['\ue844'] = '\u5507'
+        add_char = '\ue844'
+        if add_char in self.secret_map.keys():
+            print('字符需要修复， 请更新软件！！！！！！！！！！！！！！！！！！！！！')
+        else:
+            self.secret_map[add_char] = '\u5507'
+
         # unicode_code_point = ord('a')
         # print('\\u{:04x}'.format(unicode_code_point))
         ###https://www.bilinovel.com/novel/3670/190323.html '\u5507'
@@ -118,18 +123,12 @@ class Editer(object):
             elif volume_array==self.volume_no:
                 if str(chap_html).startswith('<li class="chapter-li jsChapter">'):
                     url = self.url_head + chap_html.find('a').get('href')
-                    if chap_html.text == '插图' or chap_html.text == '图片':
+                    if chap_html.text == self.color_page_name:
                         img_url = url
                     else:
                         chap_names.append(chap_html.text)
                         chap_urls.append(url)
         self.volume = {'name': name, 'chap_names': chap_names, 'chap_urls':chap_urls, 'img_url': img_url}
-        if img_url == '' and (not self.check_url(self.cover_url)):  #没有彩页 但主页封面存在，将主页封面设为书籍封面
-            self.is_color_page = False
-            self.img_url_map[self.cover_url] = str(len(self.img_url_map)).zfill(2)
-            print('**************')
-            print('提示：没有彩页，但主页封面存在，将使用主页的封面图片作为本卷图书封面')
-            print('**************')
     
     def get_chap_list(self):
         cata_html = self.get_html(self.cata_page, is_gbk=False)
@@ -311,9 +310,24 @@ class Editer(object):
         return epub_file
     
     def check_volume(self, is_gui=False, signal=None, editline=None):
+         #没有检测到插图页，手动输入插图页标题
+        if self.volume['img_url'] == '':
+            hand_in_name = self.hand_in_color_page_name(is_gui, signal, editline)
+            if hand_in_name in self.volume['chap_names']:
+                ind = self.volume['chap_names'].index(hand_in_name)
+                self.volume['chap_names'].pop(ind)
+                self.volume['img_url'] = self.volume['chap_urls'].pop(ind)
+
+        #没有彩页 但主页封面存在，将主页封面设为书籍封面 
+        if self.volume['img_url'] == '' and (not self.check_url(self.cover_url)):  
+            self.is_color_page = False
+            self.img_url_map[self.cover_url] = str(len(self.img_url_map)).zfill(2)
+            print('**************')
+            print('提示：没有彩页，但主页封面存在，将使用主页的封面图片作为本卷图书封面')
+            print('**************')
         
         if self.check_url(self.volume['img_url']):
-            if self.check_url(self.volume['chap_urls'][0]) and (not self.prev_fix_url(0, len(self.volume['chap_names']))): #如果第一章失效则使用反向递归修复程序, 反向再失败则手
+            if self.check_url(self.volume['chap_urls'][0]) and (not self.prev_fix_url(0, len(self.volume['chap_names']))): #如果第一章失效则使用反向递归修复程序, 反向再失败则手动输入
                 self.volume['img_url'] = self.hand_in_url('插图', is_gui, signal, editline)
             else:
                 self.volume['img_url'] = self.get_prev_url(0)
@@ -350,19 +364,38 @@ class Editer(object):
         else:
             self.volume['chap_urls'][chap_no] = self.get_prev_url(chap_no+1)
             return True
+        
+    def hand_in_msg(self, error_msg='', is_gui=False, signal=None, editline=None):
+        if is_gui:
+            print(error_msg)
+            signal.emit('hang')
+            time.sleep(1)
+            while not editline.isHidden():
+                time.sleep(1)
+            content = editline.text()
+            editline.clear()
+        else:
+            content = input(error_msg)
+        return content
             
     def hand_in_url(self, chap_name, is_gui=False, signal=None, editline=None):
         error_msg = f'章节\"{chap_name}\"连接失效，请手动输入该章节链接(手机版“{self.url_head}”开头的链接):'
+        return self.hand_in_msg(error_msg, is_gui, signal, editline)
+    
+    def hand_in_color_page_name(self, is_gui=False, signal=None, editline=None):
         if is_gui:
-            print(error_msg)
-            self.hang_flag = True
-            signal.emit('hang')
-            while self.hang_flag:
-                time.sleep(1)
-            url = editline.text() 
+            error_msg = f'插图页面不存在，需要下拉选择插图页标题，若不需要插图页则保持本栏为空直接点确定：'
+            editline.addItems(self.volume['chap_names'])
+            editline.setCurrentIndex(-1)
         else:
-            url = input(error_msg)
-        return url
+            error_msg = f'插图页面不存在，需要手动输入插图页标题，若不需要插图页则不输入直接回车：'
+        return self.hand_in_msg(error_msg, is_gui, signal, editline) 
+    
+   
+
+
+    
+    
     
     # 恢复函数，根据secret_map进行恢复
     def restore_chars(self, text):
