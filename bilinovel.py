@@ -112,11 +112,15 @@ if __name__=='__main__':
     args = parse_args()
     download_path = os.path.join(os.path.expanduser('~'), 'Downloads')
 
-    if not args.no_input:
-        args.book_no = input('请输入书籍号：')
-        args.volume_no = input('请输入卷号(多卷请使用逗号分隔或者连字符-)：')
+    if args.no_input:
+        downloader_router(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
+    else:
+        while True:
+            args.book_no = input('请输入书籍号：')
+            args.volume_no = input('请输入卷号(查看目录信息不输入直接按回车，下载多卷请使用逗号分隔或者连字符-)：')
+            downloader_router(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
     
-    downloader_router(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
+        
 
     
 
