@@ -85,7 +85,10 @@ class Editer(object):
         pattern = r'\(new window\[\"RegExp\"\]\(\"(.)\",\"gi\"\),\"(.)\"\)\[\'replace\'\]'
         matches = re.findall(pattern, text)
         self.secret_map = {match[0]:match[1] for match in matches}
-        self.secret_map['\ue825'] = '唇'
+        self.secret_map['\ue844'] = '\u5507'
+        # unicode_code_point = ord('a')
+        # print('\\u{:04x}'.format(unicode_code_point))
+        ###https://www.bilinovel.com/novel/3670/190323.html '\u5507'
         # print(self.secret_map, len(self.secret_map))
     
     def make_folder(self):
