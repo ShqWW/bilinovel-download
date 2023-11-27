@@ -11,7 +11,7 @@
 
 
 
-[哔哩轻小说](https://www.bilinovel.com)(linovelib)网站小说下载，并转化为EPUB格式，黑白与彩色插图、目录与封面自动排版，支持多种阅读器。
+[哔哩轻小说](https://www.bilinovel.com)(linovelib)网站小说下载，支持多线程和批量下载，并转化为EPUB格式，黑白与彩色插图、目录与封面自动排版，支持多种阅读器。
 
 有建议或bug可以提issue，也可以加QQ群：563072544
 
