@@ -38,6 +38,8 @@ def download_single_volume(root_path,
     if not editer.is_buffer():
         print('正在下载文本....')
         editer.check_volume(is_gui=is_gui, signal=hang_signal, editline=edit_line_hang)
+        print('正在预加载')
+        editer.pre_request()
         print('*********************') 
         editer.get_text()
         print('*********************')
@@ -48,6 +50,7 @@ def download_single_volume(root_path,
     
 
     print('正在下载插图.....................................')
+    editer.pre_request_img()
     editer.get_image(is_gui=is_gui, signal=progressring_signal)
     
     print('正在编辑元数据....')
@@ -116,9 +119,12 @@ if __name__=='__main__':
         downloader_router(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
     else:
         while True:
-            args.book_no = input('请输入书籍号：')
-            args.volume_no = input('请输入卷号(查看目录信息不输入直接按回车，下载多卷请使用逗号分隔或者连字符-)：')
+            # args.book_no = input('请输入书籍号：')
+            # args.volume_no = input('请输入卷号(查看目录信息不输入直接按回车，下载多卷请使用逗号分隔或者连字符-)：')
+            args.book_no = '3800'
+            args.volume_no = '1'
             downloader_router(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
+            exit(0)
     
         
 

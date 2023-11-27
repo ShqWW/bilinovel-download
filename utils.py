@@ -147,3 +147,32 @@ def check_chars(win_chars):
         else:
             new_chars += char
     return new_chars
+
+import threading
+class multi_threading():
+    def __init__(self, num_thread, task_list, is_img):
+        self.num_core = num_thread
+        len_file = len(task_list)
+        self.List_subsets = []
+        for i in range(num_thread):
+            if i != num_thread - 1:
+                subset = task_list[(len_file * i) // num_thread:(len_file * (i+1)) // num_thread]
+            else:
+                subset = task_list[(len_file * i) // num_thread:]
+            self.List_subsets.append(subset)
+        self.is_img = is_img
+        
+    def start(self, single_worker, is_reverse=False):
+        thread_list = []
+        for i in range(self.num_core):
+            # if is_reverse:
+            #     self.List_subsets[i].reverse()
+            a = threading.Thread(target=single_worker, args=(self.List_subsets[i], self.is_img, ))
+            a.start()
+            thread_list.append(a)
+        
+        # thread_list[0].join()
+        
+        # for a in thread_list:
+        #     a.join()
+        

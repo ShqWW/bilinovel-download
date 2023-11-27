@@ -72,7 +72,20 @@ class SettingWidget(QFrame):
             parent=self.parent
         )
 
+        # self.thread_card = OptionsSettingCard(
+        #     self.themeMode,
+        #     FIF.DOWNLOAD,
+        #     self.tr('多线程下载'),
+        #     self.tr("线程数量"),
+        #     texts=[
+        #         self.tr('10'), self.tr('2'),
+        #         self.tr('5'), self.tr('15'),
+        #         self.tr('关')
+        #     ],
+        #     parent=self.parent
+        # )
         self.setting_group.addSettingCard(self.download_path_card)
+        # self.setting_group.addSettingCard(self.thread_card)
         self.setting_group.addSettingCard(self.theme_card)
         self.expandLayout.setSpacing(28)
         self.expandLayout.setContentsMargins(20, 10, 20, 0)
@@ -80,6 +93,7 @@ class SettingWidget(QFrame):
 
         self.download_path_card.clicked.connect(self.download_path_changed)
         self.theme_card.optionChanged.connect(self.theme_changed)
+        # self.thread_card.optionChanged.connect(self.thread_changed)
 
     def download_path_changed(self):
         """ download folder card clicked slot """
@@ -90,6 +104,8 @@ class SettingWidget(QFrame):
     def theme_changed(self):
         theme_name = self.theme_card.choiceLabel.text()
         self.parent.set_theme(theme_name)
+    
+    # def thread_changed(self):
 
 
             

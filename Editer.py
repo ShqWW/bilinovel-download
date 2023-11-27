@@ -15,7 +15,7 @@ import pickle
 from PIL import Image
 import time
 import warnings
-
+import threading
 
 
 class Editer(object):
@@ -29,6 +29,7 @@ class Editer(object):
         self.read_tool_page = f'{self.url_head}/themes/zhmb/js/readtool.js'
         self.color_page_name = '插图'
         self.img_chap_name = '彩页'
+        self.html_buffer = dict()
 
         
         if secret_map == None:
@@ -56,9 +57,16 @@ class Editer(object):
 
         self.missing_last_chap_list = []
         self.is_color_page = True
+        self.page_num_max_buffer = 15
+        self.ignore_urls = []
+
+        
         
     # 获取html文档内容
     def get_html(self, url, is_gbk=False):
+        if url in self.html_buffer.keys():
+            # print(url)
+            return self.html_buffer[url]
         while True:
             try:
                 req = requests.get(url=url, headers=self.header, timeout=5)
@@ -67,15 +75,20 @@ class Editer(object):
                 break
             except Exception as e:
                 time.sleep(random.choice(range(5, 10)))
+        self.html_buffer[url] = req.text
         return req.text
     
     def get_html_img(self, url):
+        if url in self.html_buffer.keys():
+            # print(url)
+            return self.html_buffer[url]
         while True:
             try:
                 req=requests.get(url, headers=self.header, timeout=5)
                 break
             except Exception as e:
                 pass
+        self.html_buffer[url] = req.content
         return req.content
     
     def get_secret_map(self):
@@ -144,8 +157,6 @@ class Editer(object):
         for chap_no, chap_name in enumerate(chap_names):
             print(f'[{chap_no+1}]', chap_name)
 
-
-
     def get_page_text(self, content_html):
         bf = BeautifulSoup(content_html, 'html.parser')
         text_with_head = bf.find('div', {'id': 'acontentz', 'class': 'bcontent'}) 
@@ -170,6 +181,7 @@ class Editer(object):
                     text_html = text_html[:symbol_index] + '\n' + text_html[symbol_index:]
         text = BeautifulSoup(text_html, 'html.parser').get_text()
         text = self.restore_chars(text)
+        # time.sleep(0.2)
         return text
     
     def get_chap_text(self, url, chap_name, return_next_chapter=False):
@@ -235,6 +247,47 @@ class Editer(object):
         
             with open(textfile, 'w+', encoding='utf-8') as f:
                 f.writelines(text_html_color_new)
+
+    def get_html_buffer(self, urls, is_img):
+        
+        for url in urls:
+            if is_img:
+                req = self.get_html_img(url)
+            elif url not in self.ignore_urls:
+                req = self.get_html(url)
+                page_str = re.search(r"_(.*?).html", url)
+                if page_str is not None:
+                    page_no = page_str.group(1)
+                    page_str = page_str.group(0)
+                    page_no = int(page_no)+1
+                    url_new = url.replace(page_str, '_{}.html'.format(str(page_no)))
+                    if url_new not in req:
+                        for i in range(page_no, self.page_num_max_buffer):
+                            self.ignore_urls.append(url.replace(page_str, '_{}.html'.format(str(i))))
+            # print(req)
+
+
+    def get_multi_html(self, urls, is_img):
+        a = multi_threading(num_thread=10, task_list=urls, is_img=is_img)
+        a.start(single_worker=self.get_html_buffer, is_reverse=False)
+
+    def pre_request(self):
+        url_pages = []
+        for chap_url in self.volume['chap_urls']:
+            if not self.check_url(chap_url):
+                url_pages.append(chap_url)
+            for i in range(1, self.page_num_max_buffer):
+                if not self.check_url(chap_url):
+                    url_pages.append(chap_url.replace('.html', '_{}.html'.format(str(i))))
+    
+        a = threading.Thread(target=self.get_multi_html, args=(url_pages, False,  ))
+        a.start()
+        a.join()
+    
+    def pre_request_img(self):
+        img_urls = list(self.img_url_map.keys())
+        a = threading.Thread(target=self.get_multi_html, args=(img_urls, True,  ))
+        a.start()
 
     def get_image(self, is_gui=False, signal=None):
         img_path = self.img_path
