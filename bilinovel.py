@@ -38,7 +38,6 @@ def download_single_volume(root_path,
     if not editer.is_buffer():
         print('正在下载文本....')
         editer.check_volume(is_gui=is_gui, signal=hang_signal, editline=edit_line_hang)
-        print('正在预加载')
         editer.pre_request()
         print('*********************') 
         editer.get_text()

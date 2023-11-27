@@ -16,7 +16,7 @@ from PIL import Image
 import time
 import warnings
 import threading
-
+from concurrent.futures import ThreadPoolExecutor, wait
 
 class Editer(object):
     def __init__(self, root_path, head='https://www.bilinovel.com', secret_map=None, book_no='0000', volume_no=1):
@@ -57,34 +57,43 @@ class Editer(object):
 
         self.missing_last_chap_list = []
         self.is_color_page = True
-        self.page_num_max_buffer = 15
+        self.page_url_map = dict()
         self.ignore_urls = []
+        self.url_buffer = []
+        self.pool = ThreadPoolExecutor(20)
 
         
         
     # 获取html文档内容
-    def get_html(self, url, is_gbk=False):
+    def get_html(self, url, is_buffer=False, is_gbk=False):
+        if is_buffer and url in self.url_buffer:
+            while not url in self.html_buffer.keys():
+                time.sleep(0.1) 
         if url in self.html_buffer.keys():
             # print(url)
             return self.html_buffer[url]
         while True:
             try:
-                req = requests.get(url=url, headers=self.header, timeout=5)
+                req = requests.get(url=url, headers=self.header)
                 if is_gbk:
                     req.encoding = 'GBK'       #这里是网页的编码转换，根据网页的实际需要进行修改，经测试这个编码没有问题
                 break
             except Exception as e:
-                time.sleep(random.choice(range(5, 10)))
+                pass
+                # time.sleep(random.choice(range(5, 10)))
         self.html_buffer[url] = req.text
         return req.text
     
-    def get_html_img(self, url):
+    def get_html_img(self, url, is_buffer=False):
+        if is_buffer:
+            while not url in self.html_buffer.keys():
+                time.sleep(0.1) 
         if url in self.html_buffer.keys():
             # print(url)
             return self.html_buffer[url]
         while True:
             try:
-                req=requests.get(url, headers=self.header, timeout=5)
+                req=requests.get(url, headers=self.header)
                 break
             except Exception as e:
                 pass
@@ -195,7 +204,7 @@ class Editer(object):
             else:
                 str_out = f'    正在下载第{page_no}页......'
             print(str_out)
-            content_html = self.get_html(url, is_gbk=False)
+            content_html = self.get_html(url, is_buffer=True, is_gbk=False)
             text = self.get_page_text(content_html)
             text_chap += text
             url_new = url_ori.replace('.html', '_{}.html'.format(page_no+1))[len(self.url_head):]
@@ -248,46 +257,46 @@ class Editer(object):
             with open(textfile, 'w+', encoding='utf-8') as f:
                 f.writelines(text_html_color_new)
 
-    def get_html_buffer(self, urls, is_img):
-        
-        for url in urls:
-            if is_img:
-                req = self.get_html_img(url)
-            elif url not in self.ignore_urls:
-                req = self.get_html(url)
-                page_str = re.search(r"_(.*?).html", url)
-                if page_str is not None:
-                    page_no = page_str.group(1)
-                    page_str = page_str.group(0)
-                    page_no = int(page_no)+1
-                    url_new = url.replace(page_str, '_{}.html'.format(str(page_no)))
-                    if url_new not in req:
-                        for i in range(page_no, self.page_num_max_buffer):
-                            self.ignore_urls.append(url.replace(page_str, '_{}.html'.format(str(i))))
-            # print(req)
+    def get_html_buffer(self, url, is_img=False):
+        if is_img:
+            req = self.get_html_img(url)
+        else:
+            req = self.get_html(url)
 
 
-    def get_multi_html(self, urls, is_img):
-        a = multi_threading(num_thread=10, task_list=urls, is_img=is_img)
-        a.start(single_worker=self.get_html_buffer, is_reverse=False)
+    def write_page_dict(self, url, page_no):
+        self.page_url_map[url] = page_no
+
+    def get_page_num(self, url):
+        req = self.get_html(url)
+        mmm = r"<div class=\"atitle\"><h1 id=\"atitle\">(.*?)（2/(.*?)）"
+        page_no = max(int(re.search(mmm, req).group(2)), 1)
+        url = url.replace('_2.html', '.html')
+        self.write_page_dict(url, page_no)
 
     def pre_request(self):
-        url_pages = []
+        page_urls = []
         for chap_url in self.volume['chap_urls']:
             if not self.check_url(chap_url):
-                url_pages.append(chap_url)
-            for i in range(1, self.page_num_max_buffer):
-                if not self.check_url(chap_url):
-                    url_pages.append(chap_url.replace('.html', '_{}.html'.format(str(i))))
-    
-        a = threading.Thread(target=self.get_multi_html, args=(url_pages, False,  ))
-        a.start()
-        a.join()
+                page_urls.append(chap_url.replace('.html', '_2.html'))
+   
+        page_pool = [self.pool.submit(self.get_page_num, url) for url in page_urls]
+        wait(page_pool)
+
+        for chap_url in self.volume['chap_urls']:
+            if not self.check_url(chap_url):
+                self.url_buffer.append(chap_url)
+                for i in range(1, self.page_url_map[chap_url]+1):
+                        self.url_buffer.append(chap_url.replace('.html', '_{}.html'.format(str(i))))
+   
+        for url in self.url_buffer:
+            self.pool.submit(self.get_html_buffer, url, False)
+
     
     def pre_request_img(self):
         img_urls = list(self.img_url_map.keys())
-        a = threading.Thread(target=self.get_multi_html, args=(img_urls, True,  ))
-        a.start()
+        for url in img_urls:
+            self.pool.submit(self.get_html_buffer, url, True)
 
     def get_image(self, is_gui=False, signal=None):
         img_path = self.img_path
@@ -295,7 +304,7 @@ class Editer(object):
             len_iter = len(self.img_url_map.items())
             signal.emit('start')
             for i, (img_url, img_name) in enumerate(self.img_url_map.items()):
-                content = self.get_html_img(img_url)
+                content = self.get_html_img(img_url, is_buffer=True)
                 with open(img_path+f'/{img_name}.jpg', 'wb') as f:
                     f.write(content) #写入二进制内容 
                 signal.emit(int(100*(i+1)/len_iter))
