@@ -286,7 +286,7 @@ class Editer(object):
         for chap_url in self.volume['chap_urls']:
             if not self.check_url(chap_url):
                 self.url_buffer.append(chap_url)
-                for i in range(1, self.page_url_map[chap_url]+1):
+                for i in range(2, self.page_url_map[chap_url]+1):
                         self.url_buffer.append(chap_url.replace('.html', '_{}.html'.format(str(i))))
    
         for url in self.url_buffer:
