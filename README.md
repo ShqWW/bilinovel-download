@@ -38,8 +38,7 @@
   <img src="resource/example2.png" width="400"/>
 </div>
 
-PS：暂不支持漫画的排版，后续会开新坑专门支持漫画
-
+PS：暂不支持漫画的排版（本来也没几个漫画<
 ## 使用前安装需要的包
 ```
 pip install -r requirements.txt -i https://pypi.org/simple/
