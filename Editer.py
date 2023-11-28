@@ -18,6 +18,8 @@ import warnings
 import threading
 from concurrent.futures import ThreadPoolExecutor, wait
 
+lock = threading.RLock()
+
 class Editer(object):
     def __init__(self, root_path, head='https://www.bilinovel.com', secret_map=None, book_no='0000', volume_no=1):
         
@@ -60,7 +62,8 @@ class Editer(object):
         self.page_url_map = dict()
         self.ignore_urls = []
         self.url_buffer = []
-        self.pool = ThreadPoolExecutor(20)
+        self.max_thread_num = 15
+        self.pool = ThreadPoolExecutor(self.max_thread_num)
 
         
         
@@ -81,7 +84,9 @@ class Editer(object):
             except Exception as e:
                 pass
                 # time.sleep(random.choice(range(5, 10)))
+        lock.acquire()
         self.html_buffer[url] = req.text
+        lock.release()
         return req.text
     
     def get_html_img(self, url, is_buffer=False):
@@ -97,7 +102,9 @@ class Editer(object):
                 break
             except Exception as e:
                 pass
+        lock.acquire()
         self.html_buffer[url] = req.content
+        lock.release()
         return req.content
     
     def get_secret_map(self):
@@ -115,7 +122,7 @@ class Editer(object):
 
         # unicode_code_point = ord('a')
         # print('\\u{:04x}'.format(unicode_code_point))
-        ###https://www.bilinovel.com/novel/3670/190323.html '\u5507'
+        # https://www.bilinovel.com/novel/3670/190323.html '\u5507'
         # print(self.secret_map, len(self.secret_map))
     
     def make_folder(self):
@@ -190,7 +197,6 @@ class Editer(object):
                     text_html = text_html[:symbol_index] + '\n' + text_html[symbol_index:]
         text = BeautifulSoup(text_html, 'html.parser').get_text()
         text = self.restore_chars(text)
-        # time.sleep(0.2)
         return text
     
     def get_chap_text(self, url, chap_name, return_next_chapter=False):
@@ -226,6 +232,8 @@ class Editer(object):
             if is_fix_next_chap_url: 
                 self.volume['chap_urls'][0] = next_chap_url #正向修复
             text_html_color = text2htmls(self.img_chap_name, text)
+        
+        self.pre_request_img()
             
         for chap_no, (chap_name, chap_url) in enumerate(zip(self.volume['chap_names'], self.volume['chap_urls'])):
             is_fix_next_chap_url = (chap_name in self.missing_last_chap_list)
@@ -259,9 +267,9 @@ class Editer(object):
 
     def get_html_buffer(self, url, is_img=False):
         if is_img:
-            req = self.get_html_img(url)
+            self.get_html_img(url)
         else:
-            req = self.get_html(url)
+            self.get_html(url)
 
 
     def write_page_dict(self, url, page_no):
@@ -288,17 +296,24 @@ class Editer(object):
                 self.url_buffer.append(chap_url)
                 for i in range(2, self.page_url_map[chap_url]+1):
                         self.url_buffer.append(chap_url.replace('.html', '_{}.html'.format(str(i))))
+
+        # self.url_buffer = self.url_buffer[3:]
+        if self.volume['img_url'] != '':
+            self.url_buffer = [self.volume['img_url']] + self.url_buffer
+        
    
-        for url in self.url_buffer:
+        for i, url in enumerate(self.url_buffer):
             self.pool.submit(self.get_html_buffer, url, False)
+        time.sleep(2)
 
     
     def pre_request_img(self):
         img_urls = list(self.img_url_map.keys())
-        for url in img_urls:
+        for i, url in enumerate(img_urls):
             self.pool.submit(self.get_html_buffer, url, True)
 
     def get_image(self, is_gui=False, signal=None):
+        self.pre_request_img()
         img_path = self.img_path
         if is_gui:
             len_iter = len(self.img_url_map.items())
@@ -452,12 +467,6 @@ class Editer(object):
         else:
             error_msg = f'插图页面不存在，需要手动输入插图页标题，若不需要插图页则不输入直接回车：'
         return self.hand_in_msg(error_msg, is_gui, signal, editline) 
-    
-   
-
-
-    
-    
     
     # 恢复函数，根据secret_map进行恢复
     def restore_chars(self, text):

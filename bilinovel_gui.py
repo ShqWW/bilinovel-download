@@ -244,7 +244,7 @@ class HomeWidget(QFrame):
     def outputWritten(self, text):
         cursor = self.text_screen.textCursor()
         scrollbar=self.text_screen.verticalScrollBar()
-        is_bottom = (scrollbar.value()>=scrollbar.maximum() -4)
+        is_bottom = (scrollbar.value()>=scrollbar.maximum() - 15)
         cursor.movePosition(QTextCursor.End)
         cursor.insertText(text)
         if is_bottom:
@@ -263,10 +263,10 @@ class HomeWidget(QFrame):
         if input == 'start':
             self.label_cover.setImage(self.book_icon)
             self.label_cover.setFixedSize(self.cover_w, self.cover_h)
-            self.progressRing.setValue(0)
             self.progressRing.show()
         elif input == 'end':
             self.progressRing.hide()
+            self.progressRing.setValue(0)
         else:
             self.progressRing.setValue(input)
     
