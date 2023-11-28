@@ -11,13 +11,26 @@
 
 
 
-[哔哩轻小说](https://www.bilinovel.com)(linovelib)网站小说下载，支持多线程和批量下载，并转化为EPUB格式，黑白与彩色插图、目录与封面自动排版，支持多种阅读器。
+[哔哩轻小说](https://www.bilinovel.com)(linovelib)网站小说下载，EPUB打包。
 
-有建议或bug可以提issue，也可以加QQ群：563072544
+特性:
 
-图形界面使用[PyQt-Fluent-Widgets](https://pyqt-fluent-widgets.readthedocs.io/en/latest/index.html)界面编写，fluent design风格，支持亮暗两种主题。
+* Fluent Design风格界面，下载进度与书籍封面显示，主题切换，下载目录自定义。
+* 前后端分离，同时支持命令行版本。
+* EPUB格式打包，支持多种阅读器。
+* 正文黑白插图和彩页插图智能排版。
+* 书籍批量下载。
+* 多线程预缓存策略，下载速度快。
+* 缺失链接自动修复。
+* 自定义彩页。
+* ...................
 
-[release](https://github.com/ShqWW/bilinovel-download/releases/tag/downloader)页面发布了已经打包好的exe可执行程序(系统最低要求Windows 10)。
+
+有建议或bug可以提issue，由于软件更新频繁，可以加QQ群获得更多信息：563072544
+
+图形界面使用[PyQt-Fluent-Widgets](https://pyqt-fluent-widgets.readthedocs.io/en/latest/index.html)界面编写。
+
+[release](https://github.com/ShqWW/bilinovel-download/releases/tag/downloader)页面发布了已经打包好的exe可执行程序，包括图形化版本和命令行版本(系统最低要求Windows 10)。
 
 界面样例：
 <div align="center">
@@ -50,7 +63,7 @@ pyinstaller -F -w -i .\resource\logo.png --paths=C:\Users\haoru\bilinovel-downlo
 ```
 
 
-## EPUB书籍编辑和管理软件推荐：
-1. [Sigil](https://sigil-ebook.com/)
+## EPUB书籍编辑和管理工具推荐：
+1. [Sigil](https://sigil-ebook.com/) 
 2. [Calibre](https://www.calibre-ebook.com/)
 
