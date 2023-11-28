@@ -60,6 +60,9 @@ pip install pyinstaller
 ```
 pyinstaller -F -w -i .\resource\logo.png --paths=C:\Users\haoru\bilinovel-download .\bilinovel_gui.py --clean
 ```
+```
+pyinstaller -F -i .\resource\logo.png --paths=C:\Users\haoru\bilinovel-download .\bilinovel.py --clean
+```
 
 
 ## EPUB书籍编辑和管理工具推荐：
