@@ -21,7 +21,7 @@ from concurrent.futures import ThreadPoolExecutor, wait
 lock = threading.RLock()
 
 class Editer(object):
-    def __init__(self, root_path, head='https://www.bilinovel.com', secret_map=None, book_no='0000', volume_no=1):
+    def __init__(self, root_path, head='https://www.bilinovel.com', secret_map=None, book_no='0000', volume_no=1, multi_thread=False):
         
         self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': head}
 
@@ -64,6 +64,7 @@ class Editer(object):
         self.url_buffer = []
         self.max_thread_num = 15
         self.pool = ThreadPoolExecutor(self.max_thread_num)
+        self.multi_thread = multi_thread
 
         
         
@@ -233,7 +234,8 @@ class Editer(object):
                 self.volume['chap_urls'][0] = next_chap_url #正向修复
             text_html_color = text2htmls(self.img_chap_name, text)
         
-        self.pre_request_img()
+        if self.multi_thread:
+            self.pre_request_img()
             
         for chap_no, (chap_name, chap_url) in enumerate(zip(self.volume['chap_names'], self.volume['chap_urls'])):
             is_fix_next_chap_url = (chap_name in self.missing_last_chap_list)

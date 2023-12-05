@@ -1,6 +1,7 @@
 import argparse
 from Editer import Editer
 import os
+import shutil
 
 def parse_args():
     """Parse input arguments."""
@@ -22,10 +23,18 @@ def query_chaps(book_no):
     print('*******************************')
     print('请输入所需要的卷号进行下载（多卷可以用英文逗号分隔或直接使用连字符，详情见说明）')
 
+temp_path = ''
+
+def delete_tmp():
+    print(temp_path)
+    if os.path.exists(temp_path): 
+        shutil.rmtree(temp_path)
+
 def download_single_volume(root_path,
                            book_no,
                            volume_no,
-                           is_gui=False, 
+                           is_gui=False,
+                           multi_thread=False,
                            hang_signal=None,
                            progressring_signal=None,
                            cover_signal=None,
@@ -36,10 +45,12 @@ def download_single_volume(root_path,
     editer.get_index_url()
     print(editer.title + '-' + editer.volume['name'], editer.author)
     print('****************************')
+    temp_path = editer.temp_path
     if not editer.is_buffer():
         editer.check_volume(is_gui=is_gui, signal=hang_signal, editline=edit_line_hang)
         print('正在下载文本....')
-        editer.pre_request()
+        if multi_thread:
+            editer.pre_request()
         print('*********************') 
         editer.get_text()
         print('*********************')
@@ -67,6 +78,7 @@ def downloader_router(root_path,
                       book_no,
                       volume_no,
                       is_gui=False, 
+                      multi_thread=False,
                       hang_signal=None,
                       progressring_signal=None,
                       cover_signal=None,
@@ -104,13 +116,10 @@ def downloader_router(root_path,
             return
     if is_multi_chap:
         for volume_no in volume_no_list:
-            download_single_volume(root_path, book_no, volume_no, is_gui, hang_signal, progressring_signal, cover_signal, edit_line_hang)
+            download_single_volume(root_path, book_no, volume_no, is_gui, multi_thread, hang_signal, progressring_signal, cover_signal, edit_line_hang)
         print('所有下载任务都已经完成！')
     else:
-        
-            
-
-        download_single_volume(root_path, book_no, volume_no, is_gui, hang_signal, progressring_signal, cover_signal, edit_line_hang)
+        download_single_volume(root_path, book_no, volume_no, is_gui, multi_thread, hang_signal, progressring_signal, cover_signal, edit_line_hang)
     
 if __name__=='__main__':
     args = parse_args()

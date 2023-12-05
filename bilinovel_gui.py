@@ -2,7 +2,7 @@
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRegExp
 from PyQt5.QtGui import QIcon, QFont, QTextCursor, QPixmap, QColor,QRegExpValidator
 from PyQt5.QtWidgets import QApplication, QFrame, QGridLayout, QFileDialog
-from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, ExpandLayout, TextEdit, ImageLabel, LineEdit, PushButton, Theme, ProgressRing, setTheme, Theme, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor, qconfig, EditableComboBox)
+from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, ExpandLayout, TextEdit, ImageLabel, LineEdit, PushButton, Theme, ProgressRing, setTheme, Theme, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor, qconfig, EditableComboBox, SwitchSettingCard, BoolValidator)
 from qfluentwidgets import FluentIcon as FIF
 import sys
 import base64
@@ -24,13 +24,16 @@ class MainThread(QThread):
         try:
             book_no = self.parent.editline_book.text()
             volumn_no = self.parent.editline_volumn.text()
-            downloader_router(self.parent.parent.out_path, book_no, volumn_no, True, self.parent.hang_signal, self.parent.progressring_signal, self.parent.cover_signal, self.parent.editline_hang)
+            downloader_router(self.parent.parent.out_path, book_no, volumn_no, True, self.parent.parent.multi_thread, self.parent.hang_signal, self.parent.progressring_signal, self.parent.cover_signal, self.parent.editline_hang)
             self.parent.end_signal.emit('')
         except Exception as e:
             self.parent.end_signal.emit('')
             print('错误，请检查网络情况或确认输入是否正确')
             print('错误信息：')
             print(e)
+    def terminate(self) -> None:
+        result = super().terminate()
+        return result
 
 class EmittingStr(QObject):
     textWritten = pyqtSignal(str)  # 定义一个发送str的信号
@@ -60,6 +63,9 @@ class SettingWidget(QFrame):
         self.themeMode = OptionsConfigItem(
         None, "ThemeMode", Theme.DARK, OptionsValidator(Theme), None)
 
+        self.threadMode = OptionsConfigItem(
+        None, "ThreadMode", True, BoolValidator())
+
         self.theme_card = OptionsSettingCard(
             self.themeMode,
             FIF.BRUSH,
@@ -72,20 +78,19 @@ class SettingWidget(QFrame):
             parent=self.parent
         )
 
-        # self.thread_card = OptionsSettingCard(
-        #     self.themeMode,
-        #     FIF.DOWNLOAD,
-        #     self.tr('多线程下载'),
-        #     self.tr("线程数量"),
-        #     texts=[
-        #         self.tr('10'), self.tr('2'),
-        #         self.tr('5'), self.tr('15'),
-        #         self.tr('关')
-        #     ],
-        #     parent=self.parent
-        # )
+        self.thread_card = SwitchSettingCard(
+            FIF.SPEED_HIGH,
+            self.tr('多线程缓存'),
+            self.tr('大幅加快下载速度，推荐开启'),
+            parent=self.parent,
+            configItem=self.threadMode
+        )
+        self.thread_card.setValue(True)
+        self.thread_changed()
+        # self.thread_card.switchButton.setText(self.tr('开'))
+
         self.setting_group.addSettingCard(self.download_path_card)
-        # self.setting_group.addSettingCard(self.thread_card)
+        self.setting_group.addSettingCard(self.thread_card)
         self.setting_group.addSettingCard(self.theme_card)
         self.expandLayout.setSpacing(28)
         self.expandLayout.setContentsMargins(20, 10, 20, 0)
@@ -93,7 +98,7 @@ class SettingWidget(QFrame):
 
         self.download_path_card.clicked.connect(self.download_path_changed)
         self.theme_card.optionChanged.connect(self.theme_changed)
-        # self.thread_card.optionChanged.connect(self.thread_changed)
+        self.thread_card.checkedChanged.connect(self.thread_changed)
 
     def download_path_changed(self):
         """ download folder card clicked slot """
@@ -104,6 +109,15 @@ class SettingWidget(QFrame):
     def theme_changed(self):
         theme_name = self.theme_card.choiceLabel.text()
         self.parent.set_theme(theme_name)
+        if os.path.exists('./config'):
+            shutil.rmtree('./config')
+    
+    def thread_changed(self):
+        is_checked = self.thread_card.isChecked()
+        self.thread_card.switchButton.setText(
+            self.tr('开') if is_checked else self.tr('关'))
+        self.parent.multi_thread = is_checked
+
     
     # def thread_changed(self):
 
@@ -214,8 +228,6 @@ class HomeWidget(QFrame):
         sys.stdout = EmittingStr(textWritten=self.outputWritten)
         sys.stderr = EmittingStr(textWritten=self.outputWritten)
         self.text_screen.setText(self.parent.welcome_text) 
-        if os.path.exists('./config'):
-            shutil.rmtree('./config')
     
     def process_start(self):
         self.label_cover.setImage(self.book_icon)
@@ -301,6 +313,7 @@ class Window(FluentWindow):
         self.settingInterface = SettingWidget('Setting Interface', self)
         self.initNavigation()
         self.initWindow()
+        self.multi_thread = True
         
     def initNavigation(self):
         self.addSubInterface(self.homeInterface, FIF.HOME, '主界面')
