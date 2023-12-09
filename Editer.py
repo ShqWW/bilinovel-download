@@ -109,22 +109,27 @@ class Editer(object):
         return req.content
     
     def get_secret_map(self):
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            text = self.get_html(self.read_tool_page).encode('utf-8').decode('unicode_escape')
-        pattern = r'\(new window\[\"RegExp\"\]\(\"(.)\",\"gi\"\),\"(.)\"\)\[\'replace\'\]'
-        matches = re.findall(pattern, text)
-        self.secret_map = {match[0]:match[1] for match in matches}
-        add_char = '\ue844'
-        if add_char in self.secret_map.keys():
-            print('字符需要修复， 请更新软件！！！！！！！！！！！！！！！！！！！！！')
-        else:
-            self.secret_map[add_char] = '\u5507'
+        # with warnings.catch_warnings():
+        #     warnings.simplefilter("ignore")
+        #     text = self.get_html(self.read_tool_page).encode('utf-8').decode('unicode_escape')
+        # pattern = r'\(new window\[\"RegExp\"\]\(\"(.)\",\"gi\"\),\"(.)\"\)\[\'replace\'\]'
+        # matches = re.findall(pattern, text)
+        # self.secret_map = {match[0]:match[1] for match in matches}
+        # print(self.secret_map)
+        # add_char = '\ue844'
+        # if add_char in self.secret_map.keys():
+        #     print('字符需要修复， 请更新软件！！！！！！！！！！！！！！！！！！！！！')
+        # else:
+        #     self.secret_map[add_char] = '\u5507'
 
-        # unicode_code_point = ord('a')
-        # print('\\u{:04x}'.format(unicode_code_point))
-        # https://www.bilinovel.com/novel/3670/190323.html '\u5507'
-        # print(self.secret_map, len(self.secret_map))
+        # # unicode_code_point = ord('a')
+        # # print('\\u{:04x}'.format(unicode_code_point))
+        # # https://www.bilinovel.com/novel/3670/190323.html '\u5507'
+        # # print(self.secret_map, len(self.secret_map))
+        a = r'https://www.bilinovel.com/themes/zhmb/js/readtool.js?v1122e5'
+        text = self.get_html(a).encode('utf-8').decode('unicode_escape')
+        print(text)
+
     
     def make_folder(self):
         os.makedirs(self.temp_path, exist_ok=True)
@@ -250,6 +255,7 @@ class Editer(object):
                 img_str = re.search(r"<img(.*?)\/>", text_line)
                 if img_str is not None:
                     img_strs.append(img_str.group(0))
+            
 
         # 将彩页中后文已经出现的图片删除，避免重复
         if self.is_color_page: #判断彩页是否存在
