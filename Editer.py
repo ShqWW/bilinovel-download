@@ -2,7 +2,6 @@
 # -*- coding:utf-8 -*-
 
 import requests  # 用来抓取网页的html源码
-import random  # 取随机数
 from bs4 import BeautifulSoup  # 用于代替正则式 取源码中相应标签中的内容
 import time  # 时间相关操作
 import os
@@ -14,9 +13,9 @@ import re
 import pickle
 from PIL import Image
 import time
-import warnings
 import threading
 from concurrent.futures import ThreadPoolExecutor, wait
+import pickle
 
 lock = threading.RLock()
 
@@ -115,20 +114,19 @@ class Editer(object):
         # pattern = r'\(new window\[\"RegExp\"\]\(\"(.)\",\"gi\"\),\"(.)\"\)\[\'replace\'\]'
         # matches = re.findall(pattern, text)
         # self.secret_map = {match[0]:match[1] for match in matches}
-        # print(self.secret_map)
         # add_char = '\ue844'
         # if add_char in self.secret_map.keys():
         #     print('字符需要修复， 请更新软件！！！！！！！！！！！！！！！！！！！！！')
         # else:
         #     self.secret_map[add_char] = '\u5507'
 
-        # # unicode_code_point = ord('a')
-        # # print('\\u{:04x}'.format(unicode_code_point))
-        # # https://www.bilinovel.com/novel/3670/190323.html '\u5507'
-        # # print(self.secret_map, len(self.secret_map))
-        a = r'https://www.bilinovel.com/themes/zhmb/js/readtool.js?v1122e5'
-        text = self.get_html(a).encode('utf-8').decode('unicode_escape')
-        print(text)
+        # unicode_code_point = ord('a')
+        # print('\\u{:04x}'.format(unicode_code_point))
+        # https://www.bilinovel.com/novel/3670/190323.html '\u5507'
+        # print(self.secret_map, len(self.secret_map))
+        with open('secret_map.cfg', 'rb') as f:
+            self.secret_map = pickle.load(f)
+        
 
     
     def make_folder(self):
