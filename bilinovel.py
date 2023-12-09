@@ -134,7 +134,7 @@ if __name__=='__main__':
             args.volume_no = input('请输入卷号(查看目录信息不输入直接按回车，下载多卷请使用逗号分隔或者连字符-)：')
             # args.book_no = '3800'
             # args.volume_no = '1'
-            downloader_router(root_path='out', book_no=args.book_no, volume_no=args.volume_no, multi_thread=False)
+            downloader_router(root_path='out', book_no=args.book_no, volume_no=args.volume_no, multi_thread=True)
             # exit(0)
     
         
