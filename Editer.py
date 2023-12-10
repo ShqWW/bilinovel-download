@@ -111,8 +111,6 @@ class Editer(object):
         with open('secret_map.cfg', 'rb') as f:
             self.secret_map = pickle.load(f)
         
-
-    
     def make_folder(self):
         os.makedirs(self.temp_path, exist_ok=True)
 
