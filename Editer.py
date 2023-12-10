@@ -108,22 +108,6 @@ class Editer(object):
         return req.content
     
     def get_secret_map(self):
-        # with warnings.catch_warnings():
-        #     warnings.simplefilter("ignore")
-        #     text = self.get_html(self.read_tool_page).encode('utf-8').decode('unicode_escape')
-        # pattern = r'\(new window\[\"RegExp\"\]\(\"(.)\",\"gi\"\),\"(.)\"\)\[\'replace\'\]'
-        # matches = re.findall(pattern, text)
-        # self.secret_map = {match[0]:match[1] for match in matches}
-        # add_char = '\ue844'
-        # if add_char in self.secret_map.keys():
-        #     print('字符需要修复， 请更新软件！！！！！！！！！！！！！！！！！！！！！')
-        # else:
-        #     self.secret_map[add_char] = '\u5507'
-
-        # unicode_code_point = ord('a')
-        # print('\\u{:04x}'.format(unicode_code_point))
-        # https://www.bilinovel.com/novel/3670/190323.html '\u5507'
-        # print(self.secret_map, len(self.secret_map))
         with open('secret_map.cfg', 'rb') as f:
             self.secret_map = pickle.load(f)
         
