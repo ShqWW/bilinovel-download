@@ -155,7 +155,7 @@ class Editer(object):
                         chap_urls.append(chap_url)
                 else:
                     break
-        self.volume = {'name': name, 'chap_names': chap_names, 'chap_urls':chap_urls, 'img_url': img_url}
+        self.volume = {'name': name, 'chap_names': chap_names, 'chap_urls':chap_urls, 'color_url': img_url}
     
     def get_chap_list(self):
         cata_html = self.get_html(self.cata_page, is_gbk=False)
@@ -226,7 +226,7 @@ class Editer(object):
         self.make_folder()
         if self.is_color_page:
             is_fix_next_chap_url = (self.img_chap_name in self.missing_last_chap_list)
-            text, next_chap_url = self.get_chap_text(self.volume['img_url'], self.img_chap_name, return_next_chapter=is_fix_next_chap_url)
+            text, next_chap_url = self.get_chap_text(self.volume['color_url'], self.img_chap_name, return_next_chapter=is_fix_next_chap_url)
             if is_fix_next_chap_url: 
                 self.volume['chap_urls'][0] = next_chap_url #正向修复
             text_html_color = text2htmls(self.img_chap_name, text)
@@ -298,8 +298,8 @@ class Editer(object):
                         self.url_buffer.append(chap_url.replace('.html', '_{}.html'.format(str(i))))
 
         # self.url_buffer = self.url_buffer[3:]
-        if self.volume['img_url'] != '':
-            self.url_buffer = [self.volume['img_url']] + self.url_buffer
+        if self.volume['color_url'] != '':
+            self.url_buffer = [self.volume['color_url']] + self.url_buffer
         
    
         for i, url in enumerate(self.url_buffer):
@@ -356,7 +356,7 @@ class Editer(object):
     def get_content(self):
         num_chap = len(self.volume["chap_names"])
         num_img = len(os.listdir(self.img_path))
-        img_exist = (self.volume['img_url'] != '')
+        img_exist = (self.volume['color_url'] != '')
         content_htmls = get_content_html(self.title + '-' + self.volume['name'], self.author, num_chap, num_img, img_exist)
         textfile = self.temp_path + '/OEBPS/content.opf'
         with open(textfile, 'w+', encoding='utf-8') as f:
@@ -388,33 +388,33 @@ class Editer(object):
     
     def check_volume(self, is_gui=False, signal=None, editline=None):
          #没有检测到插图页，手动输入插图页标题
-        if self.volume['img_url'] == '':
+        if self.volume['color_url'] == '':
             hand_in_name = self.hand_in_color_page_name(is_gui, signal, editline)
             if hand_in_name in self.volume['chap_names']:
                 ind = self.volume['chap_names'].index(hand_in_name)
                 self.volume['chap_names'].pop(ind)
-                self.volume['img_url'] = self.volume['chap_urls'].pop(ind)
+                self.volume['color_url'] = self.volume['chap_urls'].pop(ind)
 
         #没有彩页 但主页封面存在，将主页封面设为书籍封面 
-        if self.volume['img_url'] == '' and (not self.check_url(self.cover_url)):  
+        if self.volume['color_url'] == '' and (not self.check_url(self.cover_url)):  
             self.is_color_page = False
             self.img_url_map[self.cover_url] = str(len(self.img_url_map)).zfill(2)
             print('**************')
             print('提示：没有彩页，但主页封面存在，将使用主页的封面图片作为本卷图书封面')
             print('**************')
         
-        if self.check_url(self.volume['img_url']):
+        if self.check_url(self.volume['color_url']):
             if self.check_url(self.volume['chap_urls'][0]) and (not self.prev_fix_url(0, len(self.volume['chap_names']))): #如果第一章失效则使用反向递归修复程序, 反向再失败则手动输入
-                self.volume['img_url'] = self.hand_in_url('插图', is_gui, signal, editline)
+                self.volume['color_url'] = self.hand_in_url('插图', is_gui, signal, editline)
             else:
-                self.volume['img_url'] = self.get_prev_url(0)
+                self.volume['color_url'] = self.get_prev_url(0)
 
         chap_names = self.volume['chap_names']
         for chap_no, url in enumerate(self.volume['chap_urls']):
             if self.check_url(url):
                 if not self.prev_fix_url(chap_no, len(self.volume['chap_names'])): #先尝试反向递归修复
                     if chap_no==0: #第一章反向修复失败，有插图页则使用正向修复，没有插图页则采用手动修复
-                        if self.volume['img_url'] == '':
+                        if self.volume['color_url'] == '':
                             self.volume['chap_urls'][0] = self.hand_in_url(chap_names[chap_no], is_gui, signal, editline)
                         else:
                             self.missing_last_chap_list.append(self.img_chap_name)
