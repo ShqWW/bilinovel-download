@@ -124,25 +124,37 @@ class Editer(object):
         cata_html = self.get_html(self.cata_page, is_gbk=False)
         cata_html = self.restore_chars(cata_html)
         bf = BeautifulSoup(cata_html, 'html.parser')
-        chap_html_list = bf.find('ol', {'id': 'volumes'}).find_all('li')
+        chap_html_list = bf.find('ol', {'id': 'volumes'})
+        # .find_all('li')
+        # print(chap_html_list)
+        # exit(0)
+        chap_html_list = chap_html_list.find_all(['h3', 'li'])
         volume_array = 0
+        get_chaps = False
         name = ''
         img_url = ''
         chap_urls = []
         chap_names = []
         for chap_html in chap_html_list:
-            if str(chap_html).startswith('<li class="chapter-bar chapter-li">'):
-                volume_array += 1
-                if volume_array==self.volume_no:
-                    name = chap_html.text
-            elif volume_array==self.volume_no:
-                if str(chap_html).startswith('<li class="chapter-li jsChapter">'):
-                    url = self.url_head + chap_html.find('a').get('href')
-                    if chap_html.text == self.color_page_name:
-                        img_url = url
+            # print(chap_html.text)
+            if not get_chaps:
+                if str(chap_html).startswith('<h3'):
+                    volume_array +=1
+                    if volume_array == self.volume_no:
+                        get_chaps=True
+                        name = chap_html.text 
+                        print(chap_html.text)
+            else:
+                if str(chap_html).startswith('<li'):
+                    chap_name = chap_html.text
+                    chap_url = self.url_head + chap_html.find('a').get('href')
+                    if chap_name==self.color_page_name:
+                        img_url = chap_url
                     else:
-                        chap_names.append(chap_html.text)
-                        chap_urls.append(url)
+                        chap_names.append(chap_name)
+                        chap_urls.append(chap_url)
+                else:
+                    break
         self.volume = {'name': name, 'chap_names': chap_names, 'chap_urls':chap_urls, 'img_url': img_url}
     
     def get_chap_list(self):
