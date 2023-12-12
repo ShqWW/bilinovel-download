@@ -43,8 +43,11 @@ def download_single_volume(root_path,
     
     editer = Editer(root_path=root_path, book_no=book_no, volume_no=volume_no)
     print('正在积极地获取书籍信息....')
-    editer.get_index_url()
-    print(editer.title + '-' + editer.volume['name'], editer.author)
+    success = editer.get_index_url()
+    if not success:
+        print('书籍信息获取失败')
+        return
+    print(editer.title + '-' + editer.volume['book_name'], editer.author)
     print('****************************')
     temp_path = editer.temp_path
     if not editer.is_buffer():
