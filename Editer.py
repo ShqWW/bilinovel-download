@@ -58,7 +58,7 @@ class Editer(object):
         self.page_url_map = dict()
         self.ignore_urls = []
         self.url_buffer = []
-        self.max_thread_num = 15
+        self.max_thread_num = 8
         self.pool = ThreadPoolExecutor(self.max_thread_num)
         self.multi_thread = multi_thread
 
@@ -72,7 +72,11 @@ class Editer(object):
             return self.html_buffer[url]
         while True:
             try:
-                req = requests.get(url=url, headers=self.header)
+                req=requests.get(url, headers=self.header)
+                while '<title>Access denied | www.bilinovel.com used Cloudflare to restrict access</title>' in req.text:
+                    # print('time out')
+                    time.sleep(0.2)
+                    req=requests.get(url, headers=self.header)
                 if is_gbk:
                     req.encoding = 'GBK'       #这里是网页的编码转换，根据网页的实际需要进行修改，经测试这个编码没有问题
                 break
@@ -94,6 +98,10 @@ class Editer(object):
         while True:
             try:
                 req=requests.get(url, headers=self.header)
+                # while '<title>Access denied | www.bilinovel.com used Cloudflare to restrict access</title>' in req.text:
+                #     print('time out')
+                #     time.sleep(2)
+                #     req=requests.get(url, headers=self.header)
                 break
             except Exception as e:
                 pass
