@@ -39,9 +39,8 @@ class Editer(object):
 
         main_html = self.get_html(self.main_page)
         bf = BeautifulSoup(main_html, 'html.parser')
-        bf = bf.find('div', {'id': 'bookDetailWrapper'})
-        self.title = bf.find('h2', {"class": "book-title"}).text
-        self.author = bf.find('a').text
+        self.title = bf.find('meta', {"property": "og:novel:book_name"})['content']
+        self.author = bf.find('meta', {"property": "og:novel:author"})['content']
         try:
             self.cover_url = re.search(r'src=\"(.*?)\"', str(bf.find('img', {"class": "book-cover"}))).group(1)
         except:
