@@ -126,13 +126,17 @@ class Editer(object):
         self.volume = {}
         self.volume['chap_urls'] = []
         self.volume['chap_names'] = []
+        if self.get_chap_list(is_print=False) < self.volume_no:
+            print('输入卷号超过实际卷数！')
+            return False
 
         cata_html = self.get_html(self.cata_page, is_gbk=False)
         cata_html = self.restore_chars(cata_html)
         bf = BeautifulSoup(cata_html, 'html.parser')
         chap_html_list = bf.find('ol', {'id': 'volumes'}).find_all(['h3', 'li'])
-
+        
         volume_array = 0
+        is_start = False
         for chap_html in chap_html_list:
             if volume_array!=self.volume_no:
                 if str(chap_html).startswith('<h3'):
@@ -140,24 +144,23 @@ class Editer(object):
                     if volume_array == self.volume_no:
                         self.volume['book_name'] = chap_html.text
             else:
-                if str(chap_html).startswith('<li'):
+                if str(chap_html).startswith('<li class="chapter-li jsChapter">'):
                     self.volume['chap_names'].append(chap_html.text)
                     self.volume['chap_urls'].append(self.url_head + chap_html.find('a').get('href'))
-                else:
+                    is_start = True
+                elif is_start:
                     break
-        if volume_array < self.volume_no:
-            print('输入卷号超过实际卷数！')
-            return False
-
         return True
         
-    def get_chap_list(self):
+    def get_chap_list(self, is_print=True):
         cata_html = self.get_html(self.cata_page, is_gbk=False)
         cata_html = self.restore_chars(cata_html)
         bf = BeautifulSoup(cata_html, 'html.parser')
         chap_html_list = bf.find('ol', {'id': 'volumes'}).find_all('h3')
-        for chap_no, chap_html in enumerate(chap_html_list):
-            print(f'[{chap_no+1}]', chap_html.text)
+        if is_print:
+            for chap_no, chap_html in enumerate(chap_html_list):
+                print(f'[{chap_no+1}]', chap_html.text)
+        return len(chap_html_list)
 
     def get_page_text(self, content_html):
         bf = BeautifulSoup(content_html, 'html.parser')
