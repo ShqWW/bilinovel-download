@@ -43,8 +43,11 @@ def download_single_volume(root_path,
     
     editer = Editer(root_path=root_path, book_no=book_no, volume_no=volume_no)
     print('正在积极地获取书籍信息....')
-    editer.get_index_url()
-    print(editer.title + '-' + editer.volume['name'], editer.author)
+    success = editer.get_index_url()
+    if not success:
+        print('书籍信息获取失败')
+        return
+    print(editer.title + '-' + editer.volume['book_name'], editer.author)
     print('****************************')
     temp_path = editer.temp_path
     if not editer.is_buffer():
@@ -130,11 +133,11 @@ if __name__=='__main__':
         downloader_router(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
     else:
         while True:
-            args.book_no = input('请输入书籍号：')
-            args.volume_no = input('请输入卷号(查看目录信息不输入直接按回车，下载多卷请使用逗号分隔或者连字符-)：')
-            # args.book_no = '3800'
-            # args.volume_no = '1'
-            downloader_router(root_path='out', book_no=args.book_no, volume_no=args.volume_no, multi_thread=True)
+            # args.book_no = input('请输入书籍号：')
+            # args.volume_no = input('请输入卷号(查看目录信息不输入直接按回车，下载多卷请使用逗号分隔或者连字符-)：')
+            args.book_no = '4'
+            args.volume_no = '1'
+            downloader_router(root_path='out', book_no=args.book_no, volume_no=args.volume_no)
             # exit(0)
     
         

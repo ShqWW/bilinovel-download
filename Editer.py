@@ -2,7 +2,6 @@
 # -*- coding:utf-8 -*-
 
 import requests  # 用来抓取网页的html源码
-import random  # 取随机数
 from bs4 import BeautifulSoup  # 用于代替正则式 取源码中相应标签中的内容
 import time  # 时间相关操作
 import os
@@ -14,14 +13,14 @@ import re
 import pickle
 from PIL import Image
 import time
-import warnings
 import threading
 from concurrent.futures import ThreadPoolExecutor, wait
+import pickle
 
 lock = threading.RLock()
 
 class Editer(object):
-    def __init__(self, root_path, head='https://www.bilinovel.com', secret_map=None, book_no='0000', volume_no=1, multi_thread=False):
+    def __init__(self, root_path, head='https://www.linovelib.com', secret_map=None, book_no='0000', volume_no=1, multi_thread=False):
         
         self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': head}
 
@@ -29,10 +28,9 @@ class Editer(object):
         self.main_page = f'{self.url_head}/novel/{book_no}.html'
         self.cata_page = f'{self.url_head}/novel/{book_no}/catalog'
         self.read_tool_page = f'{self.url_head}/themes/zhmb/js/readtool.js'
-        self.color_page_name = '插图'
-        self.img_chap_name = '彩页'
+        self.color_chap_name = '插图'
+        self.color_page_name = '彩页'
         self.html_buffer = dict()
-
         
         if secret_map == None:
             self.get_secret_map()
@@ -41,9 +39,8 @@ class Editer(object):
 
         main_html = self.get_html(self.main_page)
         bf = BeautifulSoup(main_html, 'html.parser')
-        bf = bf.find('div', {'id': 'bookDetailWrapper'})
-        self.title = bf.find('h2', {"class": "book-title"}).text
-        self.author = bf.find('a').text
+        self.title = bf.find('meta', {"property": "og:novel:book_name"})['content']
+        self.author = bf.find('meta', {"property": "og:novel:author"})['content']
         try:
             self.cover_url = re.search(r'src=\"(.*?)\"', str(bf.find('img', {"class": "book-cover"}))).group(1)
         except:
@@ -55,36 +52,33 @@ class Editer(object):
         self.epub_path = root_path
         self.temp_path = check_chars(os.path.join(self.epub_path,  'temp_'+ self.title + '_' + str(self.volume_no)))
     
-
-
         self.missing_last_chap_list = []
         self.is_color_page = True
         self.page_url_map = dict()
         self.ignore_urls = []
         self.url_buffer = []
-        self.max_thread_num = 15
+        self.max_thread_num = 8
         self.pool = ThreadPoolExecutor(self.max_thread_num)
         self.multi_thread = multi_thread
 
-        
-        
     # 获取html文档内容
     def get_html(self, url, is_buffer=False, is_gbk=False):
         if is_buffer and url in self.url_buffer:
             while not url in self.html_buffer.keys():
                 time.sleep(0.1) 
         if url in self.html_buffer.keys():
-            # print(url)
             return self.html_buffer[url]
         while True:
             try:
-                req = requests.get(url=url, headers=self.header)
+                req=requests.get(url, headers=self.header)
+                while '<title>Access denied | www.linovelib.com used Cloudflare to restrict access</title>' in req.text:
+                    time.sleep(0.2)
+                    req=requests.get(url, headers=self.header)
                 if is_gbk:
                     req.encoding = 'GBK'       #这里是网页的编码转换，根据网页的实际需要进行修改，经测试这个编码没有问题
                 break
             except Exception as e:
                 pass
-                # time.sleep(random.choice(range(5, 10)))
         lock.acquire()
         self.html_buffer[url] = req.text
         lock.release()
@@ -109,23 +103,9 @@ class Editer(object):
         return req.content
     
     def get_secret_map(self):
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            text = self.get_html(self.read_tool_page).encode('utf-8').decode('unicode_escape')
-        pattern = r'\(new window\[\"RegExp\"\]\(\"(.)\",\"gi\"\),\"(.)\"\)\[\'replace\'\]'
-        matches = re.findall(pattern, text)
-        self.secret_map = {match[0]:match[1] for match in matches}
-        add_char = '\ue844'
-        if add_char in self.secret_map.keys():
-            print('字符需要修复， 请更新软件！！！！！！！！！！！！！！！！！！！！！')
-        else:
-            self.secret_map[add_char] = '\u5507'
-
-        # unicode_code_point = ord('a')
-        # print('\\u{:04x}'.format(unicode_code_point))
-        # https://www.bilinovel.com/novel/3670/190323.html '\u5507'
-        # print(self.secret_map, len(self.secret_map))
-    
+        with open('secret_map.cfg', 'rb') as f:
+            self.secret_map = pickle.load(f)
+        
     def make_folder(self):
         os.makedirs(self.temp_path, exist_ok=True)
 
@@ -136,47 +116,39 @@ class Editer(object):
         os.makedirs(self.img_path, exist_ok=True)
     
     def get_index_url(self):
+        self.volume = {}
+        self.volume['chap_urls'] = []
+        self.volume['chap_names'] = []
+        chap_html_list = self.get_chap_list(is_print=False)
+        if len(chap_html_list)<self.volume_no:
+            print('输入卷号超过实际卷数！')
+            return False
+        volume_array = self.volume_no - 1
+        chap_html = chap_html_list[volume_array]
+
+        self.volume['book_name'] = chap_html.find('h2', {'class': 'v-line'}).text
+        chap_list = chap_html.find_all('li', {'class', 'col-4'})
+        for chap_html in chap_list:
+            self.volume['chap_names'].append(chap_html.text)
+            self.volume['chap_urls'].append(self.url_head + chap_html.find('a').get('href'))
+        return True
+        
+    def get_chap_list(self, is_print=True):
         cata_html = self.get_html(self.cata_page, is_gbk=False)
         cata_html = self.restore_chars(cata_html)
         bf = BeautifulSoup(cata_html, 'html.parser')
-        chap_html_list = bf.find('ol', {'id': 'volumes'}).find_all('li')
-        volume_array = 0
-        name = ''
-        img_url = ''
-        chap_urls = []
-        chap_names = []
-        for chap_html in chap_html_list:
-            if str(chap_html).startswith('<li class="chapter-bar chapter-li">'):
-                volume_array += 1
-                if volume_array==self.volume_no:
-                    name = chap_html.text
-            elif volume_array==self.volume_no:
-                if str(chap_html).startswith('<li class="chapter-li jsChapter">'):
-                    url = self.url_head + chap_html.find('a').get('href')
-                    if chap_html.text == self.color_page_name:
-                        img_url = url
-                    else:
-                        chap_names.append(chap_html.text)
-                        chap_urls.append(url)
-        self.volume = {'name': name, 'chap_names': chap_names, 'chap_urls':chap_urls, 'img_url': img_url}
-    
-    def get_chap_list(self):
-        cata_html = self.get_html(self.cata_page, is_gbk=False)
-        cata_html = self.restore_chars(cata_html)
-        bf = BeautifulSoup(cata_html, 'html.parser')
-        chap_html_list = bf.find('ol', {'id': 'volumes'}).find_all('li')
-        volume_array = 0
-        chap_names = []
-        for chap_html in chap_html_list:
-            if str(chap_html).startswith('<li class="chapter-bar chapter-li">'):
-                volume_array += 1
-                chap_names.append(chap_html.text)
-        for chap_no, chap_name in enumerate(chap_names):
-            print(f'[{chap_no+1}]', chap_name)
+        chap_html_list = bf.find_all('div', {'class', 'volume clearfix'})
+        if is_print:
+            for chap_no, chap_html in enumerate(chap_html_list):
+                print(f'[{chap_no+1}]', chap_html.find('h2', {'class': 'v-line'}).text)
+            return
+        else:
+            return chap_html_list
+
 
     def get_page_text(self, content_html):
         bf = BeautifulSoup(content_html, 'html.parser')
-        text_with_head = bf.find('div', {'id': 'acontentz', 'class': 'bcontent'}) 
+        text_with_head = bf.find('div', {'id': 'TextContent', 'class': 'read-content'}) 
         text_html = str(text_with_head)
         img_urlre_list = re.findall(r"<img .*?>", text_html)
         for img_urlre in img_urlre_list:
@@ -220,36 +192,35 @@ class Editer(object):
                 url = self.url_head + url_new
             else:
                 if return_next_chapter:
-                    next_chap_url = self.url_head + re.search(r'nextpage="(.*?)"', content_html).group(1)
+                    next_chap_url = self.url_head + re.search(r'书签</a><a href="(.*?)">下一章</a>', content_html).group(1)
                 break
         return text_chap, next_chap_url
     
     def get_text(self):
-        img_strs = []
-        self.make_folder()
-        if self.is_color_page:
-            is_fix_next_chap_url = (self.img_chap_name in self.missing_last_chap_list)
-            text, next_chap_url = self.get_chap_text(self.volume['img_url'], self.img_chap_name, return_next_chapter=is_fix_next_chap_url)
-            if is_fix_next_chap_url: 
-                self.volume['chap_urls'][0] = next_chap_url #正向修复
-            text_html_color = text2htmls(self.img_chap_name, text)
-        
-        if self.multi_thread:
-            self.pre_request_img()
-            
+        self.make_folder()   
+        img_strs = []   #记录后文中出现的所有图片位置
+        text_no=0   #text_no正文章节编号(排除插图)   chap_no 是所有章节编号
         for chap_no, (chap_name, chap_url) in enumerate(zip(self.volume['chap_names'], self.volume['chap_urls'])):
             is_fix_next_chap_url = (chap_name in self.missing_last_chap_list)
             text, next_chap_url = self.get_chap_text(chap_url, chap_name, return_next_chapter=is_fix_next_chap_url)
             if is_fix_next_chap_url: 
                 self.volume['chap_urls'][chap_no+1] = next_chap_url #正向修复
-            text_html = text2htmls(chap_name, text) 
-            textfile = self.text_path + f'/{str(chap_no).zfill(2)}.xhtml'
-            with open(textfile, 'w+', encoding='utf-8') as f:
-                f.writelines(text_html)
-            for text_line in text_html:
-                img_str = re.search(r"<img(.*?)\/>", text_line)
-                if img_str is not None:
-                    img_strs.append(img_str.group(0))
+            if chap_name == self.color_chap_name:
+                text_html_color = text2htmls(self.color_page_name, text)
+            else:
+                text_html = text2htmls(chap_name, text)
+                textfile = self.text_path + f'/{str(text_no).zfill(2)}.xhtml'
+                with open(textfile, 'w+', encoding='utf-8') as f:
+                    f.writelines(text_html)
+                for text_line in text_html:
+                    img_str = re.search(r"<img(.*?)\/>", text_line)
+                    if img_str is not None:
+                        img_strs.append(img_str.group(0))
+                text_no += 1
+            
+        if self.multi_thread:
+            self.pre_request_img()
+            
 
         # 将彩页中后文已经出现的图片删除，避免重复
         if self.is_color_page: #判断彩页是否存在
@@ -279,8 +250,7 @@ class Editer(object):
 
     def get_page_num(self, url):
         req = self.get_html(url)
-        mmm = r"<div class=\"atitle\"><h1 id=\"atitle\">(.*?)（2/(.*?)）"
-        page_no = max(int(re.search(mmm, req).group(2)), 1)
+        page_no = max(int(re.search(r"<h1>(.*?)（2/(.*?)）</h1>", req).group(2)), 1)
         url = url.replace('_2.html', '.html')
         self.write_page_dict(url, page_no)
 
@@ -299,19 +269,13 @@ class Editer(object):
                 for i in range(2, self.page_url_map[chap_url]+1):
                         self.url_buffer.append(chap_url.replace('.html', '_{}.html'.format(str(i))))
 
-        # self.url_buffer = self.url_buffer[3:]
-        if self.volume['img_url'] != '':
-            self.url_buffer = [self.volume['img_url']] + self.url_buffer
-        
-   
-        for i, url in enumerate(self.url_buffer):
+        for url in self.url_buffer:
             self.pool.submit(self.get_html_buffer, url, False)
         time.sleep(2)
 
     
     def pre_request_img(self):
-        img_urls = list(self.img_url_map.keys())
-        for i, url in enumerate(img_urls):
+        for url in self.img_url_map.keys():
             self.pool.submit(self.get_html_buffer, url, True)
 
     def get_image(self, is_gui=False, signal=None):
@@ -349,87 +313,36 @@ class Editer(object):
         with open(textfile, 'w+', encoding='utf-8') as f:
             f.writelines(img_htmls)
 
-    def get_toc(self):
-        toc_htmls = get_toc_html(self.title, self.volume["chap_names"])
-        textfile = self.temp_path + '/OEBPS/toc.ncx'
-        with open(textfile, 'w+', encoding='utf-8') as f:
-            f.writelines(toc_htmls)
-
-    def get_content(self):
-        num_chap = len(self.volume["chap_names"])
-        num_img = len(os.listdir(self.img_path))
-        img_exist = (self.volume['img_url'] != '')
-        content_htmls = get_content_html(self.title + '-' + self.volume['name'], self.author, num_chap, num_img, img_exist)
-        textfile = self.temp_path + '/OEBPS/content.opf'
-        with open(textfile, 'w+', encoding='utf-8') as f:
-            f.writelines(content_htmls)
-
-    def get_epub_head(self):
-        mimetype = 'application/epub+zip'
-        mimetypefile = self.temp_path + '/mimetype'
-        with open(mimetypefile, 'w+', encoding='utf-8') as f:
-            f.write(mimetype)
-        metainf_folder = os.path.join(self.temp_path, 'META-INF')
-        os.makedirs(metainf_folder, exist_ok=True)
-        container = metainf_folder + '/container.xml'
-        container_htmls = get_container_html()
-        with open(container, 'w+', encoding='utf-8') as f:
-            f.writelines(container_htmls)
-
-    def get_epub(self):
-        os.remove(os.path.join(self.temp_path, 'buffer.pkl'))
-        epub_file = check_chars(self.epub_path + '/' + self.title + '-' + self.volume['name'] + '.epub')
-        with zipfile.ZipFile(epub_file, "w", zipfile.ZIP_DEFLATED) as zf:
-            for dirpath, dirnames, filenames in os.walk(self.temp_path):
-                fpath = dirpath.replace(self.temp_path,'') #这一句很重要，不replace的话，就从根目录开始复制
-                fpath = fpath and fpath + os.sep or ''
-                for filename in filenames:
-                    zf.write(os.path.join(dirpath, filename), fpath+filename)
-        shutil.rmtree(self.temp_path)
-        return epub_file
-    
     def check_volume(self, is_gui=False, signal=None, editline=None):
+        chap_names = self.volume['chap_names']
+        chap_num = len(self.volume['chap_names'])
+        for chap_no, url in enumerate(self.volume['chap_urls']):
+            if self.check_url(url):
+                if not self.prev_fix_url(chap_no, chap_num): #先尝试反向递归修复
+                    if chap_no == 0:    #第一个章节都反向修复失败 说明后面章节全部缺失，只能手动输入第一个章节，保证第一个章节一定有效
+                        self.volume['chap_urls'][0] = self.hand_in_url(chap_names[chap_no], is_gui, signal, editline)
+                    else:   #其余章节反向修复失败 默认使用正向修复 
+                        self.missing_last_chap_list.append(chap_names[chap_no-1])
+        
          #没有检测到插图页，手动输入插图页标题
-        if self.volume['img_url'] == '':
-            hand_in_name = self.hand_in_color_page_name(is_gui, signal, editline)
-            if hand_in_name in self.volume['chap_names']:
-                ind = self.volume['chap_names'].index(hand_in_name)
-                self.volume['chap_names'].pop(ind)
-                self.volume['img_url'] = self.volume['chap_urls'].pop(ind)
+        if self.color_chap_name not in self.volume['chap_names']:
+            self.color_chap_name = self.hand_in_color_page_name(is_gui, signal, editline)
 
         #没有彩页 但主页封面存在，将主页封面设为书籍封面 
-        if self.volume['img_url'] == '' and (not self.check_url(self.cover_url)):  
+        if self.color_chap_name=='' and (not self.check_url(self.cover_url)):  
             self.is_color_page = False
             self.img_url_map[self.cover_url] = str(len(self.img_url_map)).zfill(2)
             print('**************')
             print('提示：没有彩页，但主页封面存在，将使用主页的封面图片作为本卷图书封面')
             print('**************')
-        
-        if self.check_url(self.volume['img_url']):
-            if self.check_url(self.volume['chap_urls'][0]) and (not self.prev_fix_url(0, len(self.volume['chap_names']))): #如果第一章失效则使用反向递归修复程序, 反向再失败则手动输入
-                self.volume['img_url'] = self.hand_in_url('插图', is_gui, signal, editline)
-            else:
-                self.volume['img_url'] = self.get_prev_url(0)
-
-        chap_names = self.volume['chap_names']
-        for chap_no, url in enumerate(self.volume['chap_urls']):
-            if self.check_url(url):
-                if not self.prev_fix_url(chap_no, len(self.volume['chap_names'])): #先尝试反向递归修复
-                    if chap_no==0: #第一章反向修复失败，有插图页则使用正向修复，没有插图页则采用手动修复
-                        if self.volume['img_url'] == '':
-                            self.volume['chap_urls'][0] = self.hand_in_url(chap_names[chap_no], is_gui, signal, editline)
-                        else:
-                            self.missing_last_chap_list.append(self.img_chap_name)
-                    else: #其他章节反向修复失败则采用正向修复
-                        self.missing_last_chap_list.append(chap_names[chap_no-1])
-        # print(self.missing_last_chap_list)
     
     def check_url(self, url):#当检测有问题返回True
         return ('javascript' in url or 'cid' in url)   
     
     def get_prev_url(self, chap_no): #获取前一个章节的链接
         content_html = self.get_html(self.volume['chap_urls'][chap_no], is_gbk=False)
-        return self.url_head + re.search(r'prevpage="(.*?)"', content_html).group(1) 
+        next_url = self.url_head + re.search(r'<div class="mlfy_page"><a href="(.*?)">上一章</a>', content_html).group(1)
+        return next_url
     
     def prev_fix_url(self, chap_no, chap_num):  #反向递归修复缺失链接（后修复前），若成功修复返回True，否则返回False 
         if chap_no==chap_num-1: #最后一个章节直接选择不修复 返回False
@@ -469,6 +382,47 @@ class Editer(object):
         else:
             error_msg = f'插图页面不存在，需要手动输入插图页标题，若不需要插图页则不输入直接回车：'
         return self.hand_in_msg(error_msg, is_gui, signal, editline) 
+    
+    def get_toc(self):
+        if self.is_color_page:
+            ind = self.volume["chap_names"].index(self.color_chap_name)
+            self.volume["chap_names"].pop(ind)
+        toc_htmls = get_toc_html(self.title, self.volume["chap_names"])
+        textfile = self.temp_path + '/OEBPS/toc.ncx'
+        with open(textfile, 'w+', encoding='utf-8') as f:
+            f.writelines(toc_htmls)
+
+    def get_content(self):
+        num_chap = len(self.volume["chap_names"])
+        num_img = len(os.listdir(self.img_path))
+        content_htmls = get_content_html(self.title + '-' + self.volume['book_name'], self.author, num_chap, num_img, self.is_color_page)
+        textfile = self.temp_path + '/OEBPS/content.opf'
+        with open(textfile, 'w+', encoding='utf-8') as f:
+            f.writelines(content_htmls)
+
+    def get_epub_head(self):
+        mimetype = 'application/epub+zip'
+        mimetypefile = self.temp_path + '/mimetype'
+        with open(mimetypefile, 'w+', encoding='utf-8') as f:
+            f.write(mimetype)
+        metainf_folder = os.path.join(self.temp_path, 'META-INF')
+        os.makedirs(metainf_folder, exist_ok=True)
+        container = metainf_folder + '/container.xml'
+        container_htmls = get_container_html()
+        with open(container, 'w+', encoding='utf-8') as f:
+            f.writelines(container_htmls)
+
+    def get_epub(self):
+        os.remove(os.path.join(self.temp_path, 'buffer.pkl'))
+        epub_file = check_chars(self.epub_path + '/' + self.title + '-' + self.volume['book_name'] + '.epub')
+        with zipfile.ZipFile(epub_file, "w", zipfile.ZIP_DEFLATED) as zf:
+            for dirpath, _, filenames in os.walk(self.temp_path):
+                fpath = dirpath.replace(self.temp_path,'') #这一句很重要，不replace的话，就从根目录开始复制
+                fpath = fpath and fpath + os.sep or ''
+                for filename in filenames:
+                    zf.write(os.path.join(dirpath, filename), fpath+filename)
+        shutil.rmtree(self.temp_path)
+        return epub_file
     
     # 恢复函数，根据secret_map进行恢复
     def restore_chars(self, text):

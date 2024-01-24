@@ -81,11 +81,11 @@ class SettingWidget(QFrame):
         self.thread_card = SwitchSettingCard(
             FIF.SPEED_HIGH,
             self.tr('多线程缓存'),
-            self.tr('大幅加快下载速度，推荐开启'),
+            self.tr('开启后理论上会加快下载速度，但可能会触发反爬机制造成实际下载速度变慢'),
             parent=self.parent,
             configItem=self.threadMode
         )
-        self.thread_card.setValue(True)
+        self.thread_card.setValue(False)
         self.thread_changed()
         # self.thread_card.switchButton.setText(self.tr('开'))
 
@@ -313,7 +313,7 @@ class Window(FluentWindow):
         self.settingInterface = SettingWidget('Setting Interface', self)
         self.initNavigation()
         self.initWindow()
-        self.multi_thread = True
+        self.multi_thread = False
         
     def initNavigation(self):
         self.addSubInterface(self.homeInterface, FIF.HOME, '主界面')
