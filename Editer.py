@@ -42,7 +42,7 @@ class Editer(object):
         self.title = bf.find('meta', {"property": "og:novel:book_name"})['content']
         self.author = bf.find('meta', {"property": "og:novel:author"})['content']
         try:
-            self.cover_url = re.search(r'src=\"(.*?)\"', str(bf.find('img', {"class": "book-cover"}))).group(1)
+            self.cover_url = re.search(r'src=\"(.*?)\"', str(bf.find('div', {"class": "book-img fl"}))).group(1)
         except:
             self.cover_url = 'cid'
             
