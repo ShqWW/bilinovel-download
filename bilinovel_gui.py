@@ -306,7 +306,7 @@ class Window(FluentWindow):
         super().__init__()
 
         self.out_path = os.path.join(os.path.expanduser('~'), 'Downloads')
-        self.head = 'https://www.bilinovel.com'
+        self.head = 'https://www.linovelib.com'
         split_str = '**************************************\n    '
         self.welcome_text = f'使用说明（共4条，记得下拉）：\n{split_str}1.哔哩轻小说{self.head}，根据书籍网址输入书号以及下载的卷号，书号最多输入4位阿拉伯数字。\n{split_str}2.例如小说网址是{self.head}/novel/2704.html，则书号输入2704。\n{split_str}3.要查询书籍卷号卷名等信息，则可以只输入书号不输入卷号，点击确定会返回书籍卷名称和对应的卷号。\n{split_str}4.根据上一步返回的信息确定自己想下载的卷号，要下载编号[2]对应卷，则卷号输入2。想下载多卷比如[1]至[3]对应卷，则卷号输入1-3或1,2,3（英文逗号分隔，编号也可以不连续）并点击确定。'
         self.homeInterface = HomeWidget('Home Interface', self)

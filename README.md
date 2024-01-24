@@ -11,7 +11,7 @@
 
 
 
-[哔哩轻小说](https://www.bilinovel.com)(linovelib)网站小说下载，EPUB打包。
+[哔哩轻小说](https://www.linovelib.com)(linovelib)网站小说下载，EPUB打包。
 
 特性:
 
