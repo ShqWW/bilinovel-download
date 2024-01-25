@@ -2,7 +2,7 @@
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRegExp
 from PyQt5.QtGui import QIcon, QFont, QTextCursor, QPixmap, QColor,QRegExpValidator
 from PyQt5.QtWidgets import QApplication, QFrame, QGridLayout, QFileDialog
-from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, ExpandLayout, TextEdit, ImageLabel, LineEdit, PushButton, Theme, ProgressRing, setTheme, Theme, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor, qconfig, EditableComboBox, SwitchSettingCard, BoolValidator)
+from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, ExpandLayout, TextEdit, ImageLabel, LineEdit, PushButton, Theme, ProgressRing, setTheme, Theme, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor, qconfig, EditableComboBox, BoolValidator)
 from qfluentwidgets import FluentIcon as FIF
 import sys
 import base64
@@ -24,7 +24,7 @@ class MainThread(QThread):
         try:
             book_no = self.parent.editline_book.text()
             volumn_no = self.parent.editline_volumn.text()
-            downloader_router(self.parent.parent.out_path, book_no, volumn_no, True, self.parent.parent.multi_thread, self.parent.hang_signal, self.parent.progressring_signal, self.parent.cover_signal, self.parent.editline_hang)
+            downloader_router(self.parent.parent.out_path, book_no, volumn_no, True, self.parent.hang_signal, self.parent.progressring_signal, self.parent.cover_signal, self.parent.editline_hang)
             self.parent.end_signal.emit('')
         except Exception as e:
             self.parent.end_signal.emit('')
@@ -78,19 +78,7 @@ class SettingWidget(QFrame):
             parent=self.parent
         )
 
-        self.thread_card = SwitchSettingCard(
-            FIF.SPEED_HIGH,
-            self.tr('多线程缓存'),
-            self.tr('开启后理论上会加快下载速度，但可能会触发反爬机制造成实际下载速度变慢'),
-            parent=self.parent,
-            configItem=self.threadMode
-        )
-        self.thread_card.setValue(False)
-        self.thread_changed()
-        # self.thread_card.switchButton.setText(self.tr('开'))
-
         self.setting_group.addSettingCard(self.download_path_card)
-        self.setting_group.addSettingCard(self.thread_card)
         self.setting_group.addSettingCard(self.theme_card)
         self.expandLayout.setSpacing(28)
         self.expandLayout.setContentsMargins(20, 10, 20, 0)
@@ -98,7 +86,6 @@ class SettingWidget(QFrame):
 
         self.download_path_card.clicked.connect(self.download_path_changed)
         self.theme_card.optionChanged.connect(self.theme_changed)
-        self.thread_card.checkedChanged.connect(self.thread_changed)
 
     def download_path_changed(self):
         """ download folder card clicked slot """
@@ -111,15 +98,6 @@ class SettingWidget(QFrame):
         self.parent.set_theme(theme_name)
         if os.path.exists('./config'):
             shutil.rmtree('./config')
-    
-    def thread_changed(self):
-        is_checked = self.thread_card.isChecked()
-        self.thread_card.switchButton.setText(
-            self.tr('开') if is_checked else self.tr('关'))
-        self.parent.multi_thread = is_checked
-
-    
-    # def thread_changed(self):
 
 
             
@@ -149,7 +127,6 @@ class HomeWidget(QFrame):
         
         # self.editline_book.setText('2059')
         # self.editline_volumn.setText('3')
-        
         self.book_icon = QPixmap()
         self.book_icon.loadFromData(base64.b64decode(book_base64))
         self.cover_w, self.cover_h = 152, 230
@@ -313,7 +290,6 @@ class Window(FluentWindow):
         self.settingInterface = SettingWidget('Setting Interface', self)
         self.initNavigation()
         self.initWindow()
-        self.multi_thread = False
         
     def initNavigation(self):
         self.addSubInterface(self.homeInterface, FIF.HOME, '主界面')

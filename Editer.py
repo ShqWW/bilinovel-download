@@ -16,15 +16,20 @@ import time
 import threading
 from concurrent.futures import ThreadPoolExecutor, wait
 import pickle
+from selenium import webdriver
+from selenium.webdriver.edge.options import Options
 
 lock = threading.RLock()
 
 class Editer(object):
-    def __init__(self, root_path, head='https://www.linovelib.com', secret_map=None, book_no='0000', volume_no=1, multi_thread=False):
+    def __init__(self, root_path, head='https://www.linovelib.com', book_no='0000', volume_no=1):
         
         self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': head}
 
         self.url_head = head
+        options = Options()
+
+        self.driver = webdriver.Edge(options = options)
         self.main_page = f'{self.url_head}/novel/{book_no}.html'
         self.cata_page = f'{self.url_head}/novel/{book_no}/catalog'
         self.read_tool_page = f'{self.url_head}/themes/zhmb/js/readtool.js'
@@ -32,11 +37,6 @@ class Editer(object):
         self.color_page_name = '彩页'
         self.html_buffer = dict()
         
-        if secret_map == None:
-            self.get_secret_map()
-        else:
-            self.secret_map = secret_map
-
         main_html = self.get_html(self.main_page)
         bf = BeautifulSoup(main_html, 'html.parser')
         self.title = bf.find('meta', {"property": "og:novel:book_name"})['content']
@@ -59,37 +59,27 @@ class Editer(object):
         self.url_buffer = []
         self.max_thread_num = 8
         self.pool = ThreadPoolExecutor(self.max_thread_num)
-        self.multi_thread = multi_thread
-
+        
     # 获取html文档内容
-    def get_html(self, url, is_buffer=False, is_gbk=False):
-        if is_buffer and url in self.url_buffer:
-            while not url in self.html_buffer.keys():
-                time.sleep(0.1) 
-        if url in self.html_buffer.keys():
-            return self.html_buffer[url]
+    def get_html(self, url, is_gbk=False):
         while True:
-            try:
-                req=requests.get(url, headers=self.header)
-                while '<title>Access denied | www.linovelib.com used Cloudflare to restrict access</title>' in req.text:
-                    time.sleep(0.2)
-                    req=requests.get(url, headers=self.header)
-                if is_gbk:
-                    req.encoding = 'GBK'       #这里是网页的编码转换，根据网页的实际需要进行修改，经测试这个编码没有问题
-                break
-            except Exception as e:
-                pass
-        lock.acquire()
-        self.html_buffer[url] = req.text
-        lock.release()
-        return req.text
+            time.sleep(0.5)
+            self.driver.get(url)
+            req = self.driver.page_source
+            while '<title>Access denied | www.linovelib.com used Cloudflare to restrict access</title>' in req:
+                time.sleep(5)
+                self.driver.get(url)
+                req = self.driver.page_source
+            if is_gbk:
+                req.encoding = 'GBK'       #这里是网页的编码转换，根据网页的实际需要进行修改，经测试这个编码没有问题
+            break
+        return req
     
     def get_html_img(self, url, is_buffer=False):
         if is_buffer:
             while not url in self.html_buffer.keys():
                 time.sleep(0.1) 
         if url in self.html_buffer.keys():
-            # print(url)
             return self.html_buffer[url]
         while True:
             try:
@@ -102,9 +92,9 @@ class Editer(object):
         lock.release()
         return req.content
     
-    def get_secret_map(self):
-        with open('secret_map.cfg', 'rb') as f:
-            self.secret_map = pickle.load(f)
+    # def get_secret_map(self):
+    #     with open('secret_map.cfg', 'rb') as f:
+    #         self.secret_map = pickle.load(f)
         
     def make_folder(self):
         os.makedirs(self.temp_path, exist_ok=True)
@@ -135,7 +125,6 @@ class Editer(object):
         
     def get_chap_list(self, is_print=True):
         cata_html = self.get_html(self.cata_page, is_gbk=False)
-        cata_html = self.restore_chars(cata_html)
         bf = BeautifulSoup(cata_html, 'html.parser')
         chap_html_list = bf.find_all('div', {'class', 'volume clearfix'})
         if is_print:
@@ -169,7 +158,6 @@ class Editer(object):
                 if text_html[symbol_index-1] != '\n':
                     text_html = text_html[:symbol_index] + '\n' + text_html[symbol_index:]
         text = BeautifulSoup(text_html, 'html.parser').get_text()
-        text = self.restore_chars(text)
         return text
     
     def get_chap_text(self, url, chap_name, return_next_chapter=False):
@@ -183,7 +171,7 @@ class Editer(object):
             else:
                 str_out = f'    正在下载第{page_no}页......'
             print(str_out)
-            content_html = self.get_html(url, is_buffer=True, is_gbk=False)
+            content_html = self.get_html(url, is_gbk=False)
             text = self.get_page_text(content_html)
             text_chap += text
             url_new = url_ori.replace('.html', '_{}.html'.format(page_no+1))[len(self.url_head):]
@@ -218,10 +206,6 @@ class Editer(object):
                         img_strs.append(img_str.group(0))
                 text_no += 1
             
-        if self.multi_thread:
-            self.pre_request_img()
-            
-
         # 将彩页中后文已经出现的图片删除，避免重复
         if self.is_color_page: #判断彩页是否存在
             text_html_color_new = []
@@ -237,49 +221,11 @@ class Editer(object):
         
             with open(textfile, 'w+', encoding='utf-8') as f:
                 f.writelines(text_html_color_new)
-
-    def get_html_buffer(self, url, is_img=False):
-        if is_img:
-            self.get_html_img(url)
-        else:
-            self.get_html(url)
-
-
-    def write_page_dict(self, url, page_no):
-        self.page_url_map[url] = page_no
-
-    def get_page_num(self, url):
-        req = self.get_html(url)
-        page_no = max(int(re.search(r"<h1>(.*?)（2/(.*?)）</h1>", req).group(2)), 1)
-        url = url.replace('_2.html', '.html')
-        self.write_page_dict(url, page_no)
-
-    def pre_request(self):
-        page_urls = []
-        for chap_url in self.volume['chap_urls']:
-            if not self.check_url(chap_url):
-                page_urls.append(chap_url.replace('.html', '_2.html'))
-   
-        page_pool = [self.pool.submit(self.get_page_num, url) for url in page_urls]
-        wait(page_pool)
-
-        for chap_url in self.volume['chap_urls']:
-            if not self.check_url(chap_url):
-                self.url_buffer.append(chap_url)
-                for i in range(2, self.page_url_map[chap_url]+1):
-                        self.url_buffer.append(chap_url.replace('.html', '_{}.html'.format(str(i))))
-
-        for url in self.url_buffer:
-            self.pool.submit(self.get_html_buffer, url, False)
-        time.sleep(2)
-
-    
-    def pre_request_img(self):
-        for url in self.img_url_map.keys():
-            self.pool.submit(self.get_html_buffer, url, True)
+        
 
     def get_image(self, is_gui=False, signal=None):
-        self.pre_request_img()
+        for url in self.img_url_map.keys():
+            self.pool.submit(self.get_html_img, url)
         img_path = self.img_path
         if is_gui:
             len_iter = len(self.img_url_map.items())
@@ -424,18 +370,18 @@ class Editer(object):
         shutil.rmtree(self.temp_path)
         return epub_file
     
-    # 恢复函数，根据secret_map进行恢复
-    def restore_chars(self, text):
-        restored_text = ""
-        i = 0
-        while i < len(text):
-            char = text[i]
-            if char in self.secret_map:
-                    restored_text += self.secret_map[char]
-            else:
-                    restored_text += char
-            i += 1
-        return restored_text
+    # # 恢复函数，根据secret_map进行恢复
+    # def restore_chars(self, text):
+    #     restored_text = ""
+    #     i = 0
+    #     while i < len(text):
+    #         char = text[i]
+    #         if char in self.secret_map:
+    #                 restored_text += self.secret_map[char]
+    #         else:
+    #                 restored_text += char
+    #         i += 1
+    #     return restored_text
     
     def buffer(self):
         filename = 'buffer.pkl'
