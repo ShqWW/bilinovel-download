@@ -65,6 +65,14 @@ pyinstaller -F -w -i .\resource\logo.png --paths=C:\Users\haoru\bilinovel-downlo
 pyinstaller -F -i .\resource\logo.png --paths=C:\Users\haoru\bilinovel-download .\bilinovel.py --clean
 ```
 
+## 相关项目：
+
+* [轻小说文库EPUB下载器](https://github.com/ShqWW/lightnovel-download)
+
+* [哔哩轻小说EPUB下载器](https://github.com/ShqWW/bilinovel-download)
+
+* [拷贝漫画EPUB下载器](https://github.com/ShqWW/copymanga-download)
+
 
 ## EPUB书籍编辑和管理工具推荐：
 1. [Sigil](https://sigil-ebook.com/) 
