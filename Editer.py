@@ -22,11 +22,16 @@ import pickle
 lock = threading.RLock()
 
 class Editer(object):
-    def __init__(self, root_path, head='https://www.linovelib.com', book_no='0000', volume_no=1):
-        
-        self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': head, 'Accept-Language': 'zh-CN,zh;q=0.9',}
+    def __init__(self, root_path, book_no='0000', volume_no=1):
 
-        self.url_head = head
+
+        self.url_head = 'https://www.linovelib.com'
+        self.url_head_mobile = 'https://www.bilinovel.com'
+        
+        self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': self.url_head, 'Accept-Language': 'zh-CN,zh;q=0.9',}
+        self.header_mobile = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1', 'referer': self.url_head_mobile, 'Accept-Language': 'zh-CN,zh;q=0.9',}
+
+        
         # options = Options()
         # self.driver = webdriver.Edge(options = options)
         self.main_page = f'{self.url_head}/novel/{book_no}.html'
@@ -62,23 +67,31 @@ class Editer(object):
         
         
     # 获取html文档内容
-    def get_html(self, url, is_gbk=False):
+    def get_html(self, url, is_gbk=False, use_mobile=False):
+        if use_mobile:
+            header = self.header_mobile
+        else:
+            header = self.header
         while True:
             time.sleep(0.5)
             # self.driver.get(url)
             # req = self.driver.page_source
-            req = requests.get(url, headers=self.header)
-            while '<title>Access denied | www.linovelib.com used Cloudflare to restrict access</title>' in req:
+            req = requests.get(url, headers=header)
+            while 'used Cloudflare to restrict access</title>' in req.text:
                 time.sleep(5)
                 # self.driver.get(url)
                 # req = self.driver.page_source
-                req = requests.get(url, headers=self.header)
+                req = requests.get(url, headers=header)
             if is_gbk:
                 req.encoding = 'GBK'       #这里是网页的编码转换，根据网页的实际需要进行修改，经测试这个编码没有问题
             break
         return req.text
     
-    def get_html_content(self, url, is_buffer=False):
+    def get_html_content(self, url, is_buffer=False, use_mobile=False):
+        if use_mobile:
+            header = self.header_mobile
+        else:
+            header = self.header
         if is_buffer:
             while not url in self.html_buffer.keys():
                 time.sleep(0.1) 
@@ -86,7 +99,7 @@ class Editer(object):
             return self.html_buffer[url]
         while True:
             try:
-                req=requests.get(url, headers=self.header)
+                req=requests.get(url, headers=header)
                 break
             except Exception as e:
                 pass
@@ -148,7 +161,7 @@ class Editer(object):
         chap_list = chap_html.find_all('li', {'class', 'col-4'})
         for chap_html in chap_list:
             self.volume['chap_names'].append(chap_html.text)
-            self.volume['chap_urls'].append(self.url_head + chap_html.find('a').get('href'))
+            self.volume['chap_urls'].append(self.url_head_mobile + chap_html.find('a').get('href'))
         return True
         
     def get_chap_list(self, is_print=True):
@@ -165,7 +178,8 @@ class Editer(object):
 
     def get_page_text(self, content_html):
         bf = BeautifulSoup(content_html, 'html.parser')
-        text_with_head = bf.find('div', {'id': 'TextContent', 'class': 'read-content'}) 
+        # text_with_head = bf.find('div', {'id': 'TextContent', 'class': 'read-content'}) 
+        text_with_head = bf.find('div', {'id': 'acontentz', 'class': 'bcontent'})
         text_html = str(text_with_head)
         img_urlre_list = re.findall(r"<img .*?>", text_html)
         for img_urlre in img_urlre_list:
@@ -200,16 +214,18 @@ class Editer(object):
             else:
                 str_out = f'    正在下载第{page_no}页......'
             print(str_out)
-            content_html = self.get_html(url, is_gbk=False)
+            content_html = self.get_html(url, is_gbk=False, use_mobile=True)
             text = self.get_page_text(content_html)
             text_chap += text
             url_new = url_ori.replace('.html', '_{}.html'.format(page_no+1))[len(self.url_head):]
             if url_new in content_html:
                 page_no += 1
-                url = self.url_head + url_new
+                url = self.url_head_mobile + url_new
             else:
                 if return_next_chapter:
-                    next_chap_url = self.url_head + re.search(r'书签</a><a href="(.*?)">下一章</a>', content_html).group(1)
+                    # next_chap_url = self.url_head_mobile + re.search(r'书签</a><a href="(.*?)">下一章</a>', content_html).group(1)
+                    bf = BeautifulSoup(content_html, 'html.parser')
+                    next_chap_url = bf.find('link', {'rel': 'prerender'}).get('href')
                 break
         return text_chap, next_chap_url
     
@@ -316,7 +332,8 @@ class Editer(object):
     
     def get_prev_url(self, chap_no): #获取前一个章节的链接
         content_html = self.get_html(self.volume['chap_urls'][chap_no], is_gbk=False)
-        next_url = self.url_head + re.search(r'<div class="mlfy_page"><a href="(.*?)">上一章</a>', content_html).group(1)
+        # next_url = self.url_head + re.search(r'<div class="mlfy_page"><a href="(.*?)">上一章</a>', content_html).group(1)
+        next_url = self.url_head_mobile + re.search('var prevpage=\"(.*?)\";var', content_html).group(1)
         return next_url
     
     def prev_fix_url(self, chap_no, chap_num):  #反向递归修复缺失链接（后修复前），若成功修复返回True，否则返回False 
