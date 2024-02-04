@@ -59,10 +59,7 @@ python bilinovel_gui.py
 pip install pyinstaller
 ```
 ```
-pyinstaller -F -w -i .\resource\logo.png --paths=C:\Users\haoru\bilinovel-download .\bilinovel_gui.py --clean
-```
-```
-pyinstaller -F -i .\resource\logo.png --paths=C:\Users\haoru\bilinovel-download .\bilinovel.py --clean
+pyinstaller -F -w -i .\resource\logo.png .\bilinovel_gui.py
 ```
 
 ## 相关项目：
