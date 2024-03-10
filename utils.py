@@ -139,7 +139,7 @@ def get_color_html(colorimg_num):
     return color_htmls
 
 def check_chars(win_chars):
-    win_illegal_chars = '?*"<>|:/\\'
+    win_illegal_chars = '?*"<>|:/'
     new_chars = ''
     for char in win_chars:
         if char in win_illegal_chars:
