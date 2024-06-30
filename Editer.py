@@ -24,11 +24,16 @@ lock = threading.RLock()
 class Editer(object):
     def __init__(self, root_path, head='https://www.linovelib.com', book_no='0000', volume_no=1):
         
-        self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': head}
+        self.header = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47',
+            'referer': head,
+            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+        }
 
         self.url_head = head
         options = Options()
         options.add_argument('--start-minimized')
+        options.add_argument("--lang=zh-CN")
 
         self.driver = webdriver.Edge(options = options)
         self.main_page = f'{self.url_head}/novel/{book_no}.html'
