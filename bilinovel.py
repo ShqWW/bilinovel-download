@@ -3,6 +3,7 @@ from Editer import Editer
 import os
 import shutil
 from utils import *
+from translate import translate_epub_with_path
 
 def parse_args():
     """Parse input arguments."""
@@ -38,8 +39,8 @@ def download_single_volume(root_path,
                            hang_signal=None,
                            progressring_signal=None,
                            cover_signal=None,
-                           edit_line_hang=None):
-    
+                           edit_line_hang=None,
+                           to_traditional_chinese=False):
     editer = Editer(root_path=root_path, book_no=book_no, volume_no=volume_no)
     print('正在积极地获取书籍信息....')
     success = editer.get_index_url()
@@ -73,7 +74,10 @@ def download_single_volume(root_path,
     print('正在生成电子书....')
     epub_file = editer.get_epub()
     print('生成成功！', f'电子书路径【{epub_file}】')
-    
+    if to_traditional_chinese:
+        is_success = translate_epub_with_path(epub_file)
+        if is_success:
+            os.remove(epub_file)
 
 def downloader_router(root_path,
                       book_no,
@@ -82,7 +86,8 @@ def downloader_router(root_path,
                       hang_signal=None,
                       progressring_signal=None,
                       cover_signal=None,
-                      edit_line_hang=None):
+                      edit_line_hang=None,
+                      to_traditional_chinese=False):
     is_multi_chap = False
     if len(book_no)==0:
         print('请检查输入是否完整正确！')
@@ -116,10 +121,10 @@ def downloader_router(root_path,
             return
     if is_multi_chap:
         for volume_no in volume_no_list:
-            download_single_volume(root_path, book_no, volume_no, is_gui, hang_signal, progressring_signal, cover_signal, edit_line_hang)
+            download_single_volume(root_path, book_no, volume_no, is_gui, hang_signal, progressring_signal, cover_signal, edit_line_hang, to_traditional_chinese)
         print('所有下载任务都已经完成！')
     else:
-        download_single_volume(root_path, book_no, volume_no, is_gui, hang_signal, progressring_signal, cover_signal, edit_line_hang)
+        download_single_volume(root_path, book_no, volume_no, is_gui, hang_signal, progressring_signal, cover_signal, edit_line_hang, to_traditional_chinese)
     
 if __name__=='__main__':
     args = parse_args()
