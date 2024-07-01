@@ -360,19 +360,6 @@ class Editer(object):
         shutil.rmtree(self.temp_path)
         return epub_file
     
-    # # 恢复函数，根据secret_map进行恢复
-    # def restore_chars(self, text):
-    #     restored_text = ""
-    #     i = 0
-    #     while i < len(text):
-    #         char = text[i]
-    #         if char in self.secret_map:
-    #                 restored_text += self.secret_map[char]
-    #         else:
-    #                 restored_text += char
-    #         i += 1
-    #     return restored_text
-    
     def buffer(self):
         filename = 'buffer.pkl'
         filepath = os.path.join(self.temp_path, filename)
