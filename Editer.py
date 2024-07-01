@@ -22,7 +22,7 @@ from selenium.webdriver.edge.options import Options
 lock = threading.RLock()
 
 class Editer(object):
-    def __init__(self, root_path, head='https://www.linovelib.com', book_no='0000', volume_no=1):
+    def __init__(self, root_path, head='https://www.linovelib.com', book_no='0000', volume_no=1, confirm_no_img=True):
         
         self.header = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47',
@@ -58,6 +58,8 @@ class Editer(object):
         self.epub_path = root_path
         self.temp_path = os.path.join(self.epub_path,  'temp_'+ check_chars(self.title) + '_' + check_chars(str(self.volume_no)))
     
+        self.confirm_no_img = confirm_no_img
+
         self.missing_last_chap_list = []
         self.is_color_page = True
         self.page_url_map = dict()
@@ -262,7 +264,10 @@ class Editer(object):
         
          #没有检测到插图页，手动输入插图页标题
         if self.color_chap_name not in self.volume['chap_names']:
-            self.color_chap_name = self.hand_in_color_page_name(is_gui, signal, editline)
+            if self.confirm_no_img:
+                self.color_chap_name = self.hand_in_color_page_name(is_gui, signal, editline)
+            else:
+                self.color_chap_name = ""
 
         #没有彩页 但主页封面存在，将主页封面设为书籍封面 
         if self.color_chap_name=='' and (not self.check_url(self.cover_url)):  

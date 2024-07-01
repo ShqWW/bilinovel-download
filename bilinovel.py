@@ -40,8 +40,9 @@ def download_single_volume(root_path,
                            progressring_signal=None,
                            cover_signal=None,
                            edit_line_hang=None,
-                           to_traditional_chinese=False):
-    editer = Editer(root_path=root_path, book_no=book_no, volume_no=volume_no)
+                           to_traditional_chinese=False,
+                           confirm_no_img=True):
+    editer = Editer(root_path=root_path, book_no=book_no, volume_no=volume_no, confirm_no_img=confirm_no_img)
     print('正在积极地获取书籍信息....')
     success = editer.get_index_url()
     if not success:
@@ -87,7 +88,8 @@ def downloader_router(root_path,
                       progressring_signal=None,
                       cover_signal=None,
                       edit_line_hang=None,
-                      to_traditional_chinese=False):
+                      to_traditional_chinese=False,
+                      confirm_no_img=True):
     is_multi_chap = False
     if len(book_no)==0:
         print('请检查输入是否完整正确！')
@@ -121,10 +123,10 @@ def downloader_router(root_path,
             return
     if is_multi_chap:
         for volume_no in volume_no_list:
-            download_single_volume(root_path, book_no, volume_no, is_gui, hang_signal, progressring_signal, cover_signal, edit_line_hang, to_traditional_chinese)
+            download_single_volume(root_path, book_no, volume_no, is_gui, hang_signal, progressring_signal, cover_signal, edit_line_hang, to_traditional_chinese, confirm_no_img)
         print('所有下载任务都已经完成！')
     else:
-        download_single_volume(root_path, book_no, volume_no, is_gui, hang_signal, progressring_signal, cover_signal, edit_line_hang, to_traditional_chinese)
+        download_single_volume(root_path, book_no, volume_no, is_gui, hang_signal, progressring_signal, cover_signal, edit_line_hang, to_traditional_chinese, confirm_no_img)
     
 if __name__=='__main__':
     args = parse_args()

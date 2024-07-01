@@ -2,7 +2,7 @@
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRegExp
 from PyQt5.QtGui import QIcon, QFont, QTextCursor, QPixmap, QColor,QRegExpValidator
 from PyQt5.QtWidgets import QApplication, QFrame, QGridLayout, QFileDialog
-from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, ExpandLayout, TextEdit, ImageLabel, LineEdit, PushButton, Theme, ProgressRing, setTheme, Theme, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor, qconfig, EditableComboBox, BoolValidator)
+from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, ExpandLayout, TextEdit, ImageLabel, LineEdit, PushButton, Theme, ProgressRing, setTheme, Theme, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor, qconfig, EditableComboBox, BoolValidator, SwitchSettingCard)
 from qfluentwidgets import FluentIcon as FIF
 import sys
 import base64
@@ -33,7 +33,8 @@ class MainThread(QThread):
                 self.parent.progressring_signal,
                 self.parent.cover_signal,
                 self.parent.editline_hang,
-                self.parent.parent.to_traditional_chinese
+                self.parent.parent.to_traditional_chinese,
+                self.parent.parent.confirm_no_img
             )
             self.parent.end_signal.emit('')
         except Exception as e:
@@ -76,6 +77,9 @@ class SettingWidget(QFrame):
         self.toTraditionalChineseMode = OptionsConfigItem(
         None, "ToTraditionalChineseMode", self.parent.to_traditional_chinese, BoolValidator())
 
+        self.confirmNoImgMode = OptionsConfigItem(
+        None, "ConfirmNoImgMode", self.parent.confirm_no_img, BoolValidator())
+
         self.threadMode = OptionsConfigItem(
         None, "ThreadMode", True, BoolValidator())
 
@@ -102,9 +106,18 @@ class SettingWidget(QFrame):
             parent=self.parent
         )
 
+        self.confirm_no_img_card = SwitchSettingCard(
+            FIF.ACCEPT_MEDIUM,
+            self.tr('插图页面不存在时'),
+            self.tr("手动设定插图页面"),
+            self.confirmNoImgMode,
+            self.parent
+        )
+
         self.setting_group.addSettingCard(self.download_path_card)
         self.setting_group.addSettingCard(self.theme_card)
         self.setting_group.addSettingCard(self.language_card)
+        self.setting_group.addSettingCard(self.confirm_no_img_card)
         self.expandLayout.setSpacing(28)
         self.expandLayout.setContentsMargins(20, 10, 20, 0)
         self.expandLayout.addWidget(self.setting_group)
@@ -112,6 +125,7 @@ class SettingWidget(QFrame):
         self.download_path_card.clicked.connect(self.download_path_changed)
         self.theme_card.optionChanged.connect(self.theme_changed)
         self.language_card.optionChanged.connect(self.language_changed)
+        self.confirm_no_img_card.checkedChanged.connect(self.confirm_no_img_changed)
 
     def download_path_changed(self):
         """ download folder card clicked slot """
@@ -135,6 +149,14 @@ class SettingWidget(QFrame):
             self.parent.to_traditional_chinese = False
             print("输出设定成简体中文，若需更改请至设定页面")
         self.parent.save_config_to_traditional_chinese(self.parent.to_traditional_chinese)
+
+    def confirm_no_img_changed(self):
+        confirm_no_img = self.confirm_no_img_card.isChecked()
+        if confirm_no_img:
+            self.parent.confirm_no_img = True
+        else:
+            self.parent.confirm_no_img = False
+        self.parent.save_config_confirm_no_img(self.parent.confirm_no_img)
 
 class HomeWidget(QFrame):
 
@@ -319,6 +341,7 @@ class Window(FluentWindow):
         self.config_path = os.path.join(os.path.expanduser('~'), '.bilinovel.conf')
         self.out_path = self.get_config_out_path()
         self.to_traditional_chinese = self.get_config_to_traditional_chinese()
+        self.confirm_no_img = self.get_config_confirm_no_img()
         self.head = 'https://www.linovelib.com'
         split_str = '**************************************\n    '
         self.welcome_text = f'使用说明（共5条，记得下拉）：\n{split_str}1.哔哩轻小说{self.head}，根据书籍网址输入书号以及下载的卷号，书号最多输入4位阿拉伯数字。\n{split_str}2.例如小说网址是{self.head}/novel/2704.html，则书号输入2704。\n{split_str}3.要查询书籍卷号卷名等信息，则可以只输入书号不输入卷号，点击确定会返回书籍卷名称和对应的卷号。\n{split_str}4.根据上一步返回的信息确定自己想下载的卷号，要下载编号[2]对应卷，则卷号输入2。想下载多卷比如[1]至[3]对应卷，则卷号输入1-3或1,2,3（英文逗号分隔，编号也可以不连续）并点击确定。\n{split_str}5.若需更改.epub 输出语言请至设定页面，目前输出为{"繁體中文" if self.to_traditional_chinese else "简体中文"}。\n'
@@ -368,6 +391,26 @@ class Window(FluentWindow):
                 config.write(configfile)
         return to_traditional_chinese
     
+    def get_config_confirm_no_img(self):
+        """
+        get confirm_no_img variable from config file, else use default
+        
+            Returns:
+                confirm_no_img (bool)
+        """
+        config = configparser.ConfigParser()
+        config.read(self.config_path)
+        try:
+            confirm_no_img = config.getboolean('Settings', 'confirm_no_img')
+        except:
+            if not config.has_section('Settings'):
+                config.add_section('Settings')
+            confirm_no_img = True
+            config.set('Settings', 'confirm_no_img', 'true')
+            with open(self.config_path, "w") as configfile:
+                config.write(configfile)
+        return confirm_no_img
+
     def save_config_to_traditional_chinese(self, to_traditional_chinese):
         """
         save to_traditional_chinese variable to config file
@@ -381,6 +424,23 @@ class Window(FluentWindow):
             config.set('Settings', 'to_traditional_chinese', 'true')
         else:
             config.set('Settings', 'to_traditional_chinese', 'false')
+        
+        with open(self.config_path, "w") as configfile:
+            config.write(configfile)
+
+    def save_config_confirm_no_img(self, confirm_no_img):
+        """
+        save confirm_no_img variable to config file
+        """
+        config = configparser.ConfigParser()
+        config.read(self.config_path)
+        if not config.has_section('Settings'):
+            config.add_section('Settings')
+
+        if confirm_no_img:
+            config.set('Settings', 'confirm_no_img', 'true')
+        else:
+            config.set('Settings', 'confirm_no_img', 'false')
         
         with open(self.config_path, "w") as configfile:
             config.write(configfile)
