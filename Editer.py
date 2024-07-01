@@ -56,7 +56,7 @@ class Editer(object):
         self.volume_no = volume_no
 
         self.epub_path = root_path
-        self.temp_path = check_chars(os.path.join(self.epub_path,  'temp_'+ self.title + '_' + str(self.volume_no)))
+        self.temp_path = os.path.join(self.epub_path,  'temp_'+ self.title + '_' + str(self.volume_no))
     
         self.missing_last_chap_list = []
         self.is_color_page = True
