@@ -72,6 +72,9 @@ class SettingWidget(QFrame):
         self.themeMode = OptionsConfigItem(
         None, "ThemeMode", Theme.DARK, OptionsValidator(Theme), None)
 
+        self.toTraditionalChineseMode = OptionsConfigItem(
+        None, "ToTraditionalChineseMode", self.parent.to_traditional_chinese, BoolValidator())
+
         self.threadMode = OptionsConfigItem(
         None, "ThreadMode", True, BoolValidator())
 
@@ -87,14 +90,27 @@ class SettingWidget(QFrame):
             parent=self.parent
         )
 
+        self.language_card = OptionsSettingCard(
+            self.toTraditionalChineseMode,
+            FIF.LANGUAGE,
+            self.tr('輸出語言'),
+            self.tr("更改語言"),
+            texts=[
+                self.tr('繁體中文'), self.tr('简体中文')
+            ],
+            parent=self.parent
+        )
+
         self.setting_group.addSettingCard(self.download_path_card)
         self.setting_group.addSettingCard(self.theme_card)
+        self.setting_group.addSettingCard(self.language_card)
         self.expandLayout.setSpacing(28)
         self.expandLayout.setContentsMargins(20, 10, 20, 0)
         self.expandLayout.addWidget(self.setting_group)
 
         self.download_path_card.clicked.connect(self.download_path_changed)
         self.theme_card.optionChanged.connect(self.theme_changed)
+        self.language_card.optionChanged.connect(self.language_changed)
 
     def download_path_changed(self):
         """ download folder card clicked slot """
@@ -108,8 +124,14 @@ class SettingWidget(QFrame):
         if os.path.exists('./config'):
             shutil.rmtree('./config')
 
-
-            
+    def language_changed(self):
+        language = self.language_card.choiceLabel.text()
+        if language=="繁體中文":
+            self.parent.to_traditional_chinese = True
+            print("輸出設定成繁體中文，若需更改請至設定頁面")
+        else:
+            self.parent.to_traditional_chinese = False
+            print("输出设定成简体中文，若需更改请至设定页面")
 
 class HomeWidget(QFrame):
 
@@ -295,7 +317,7 @@ class Window(FluentWindow):
         self.to_traditional_chinese = False
         self.head = 'https://www.linovelib.com'
         split_str = '**************************************\n    '
-        self.welcome_text = f'使用说明（共4条，记得下拉）：\n{split_str}1.哔哩轻小说{self.head}，根据书籍网址输入书号以及下载的卷号，书号最多输入4位阿拉伯数字。\n{split_str}2.例如小说网址是{self.head}/novel/2704.html，则书号输入2704。\n{split_str}3.要查询书籍卷号卷名等信息，则可以只输入书号不输入卷号，点击确定会返回书籍卷名称和对应的卷号。\n{split_str}4.根据上一步返回的信息确定自己想下载的卷号，要下载编号[2]对应卷，则卷号输入2。想下载多卷比如[1]至[3]对应卷，则卷号输入1-3或1,2,3（英文逗号分隔，编号也可以不连续）并点击确定。'
+        self.welcome_text = f'使用说明（共5条，记得下拉）：\n{split_str}1.哔哩轻小说{self.head}，根据书籍网址输入书号以及下载的卷号，书号最多输入4位阿拉伯数字。\n{split_str}2.例如小说网址是{self.head}/novel/2704.html，则书号输入2704。\n{split_str}3.要查询书籍卷号卷名等信息，则可以只输入书号不输入卷号，点击确定会返回书籍卷名称和对应的卷号。\n{split_str}4.根据上一步返回的信息确定自己想下载的卷号，要下载编号[2]对应卷，则卷号输入2。想下载多卷比如[1]至[3]对应卷，则卷号输入1-3或1,2,3（英文逗号分隔，编号也可以不连续）并点击确定。\n{split_str}5.若需更改.epub 输出语言请至设定页面，目前输出为{"繁體中文" if self.to_traditional_chinese else "简体中文"}。\n'
         self.homeInterface = HomeWidget('Home Interface', self)
         self.settingInterface = SettingWidget('Setting Interface', self)
         self.initNavigation()
