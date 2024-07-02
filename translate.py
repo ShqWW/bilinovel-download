@@ -73,4 +73,4 @@ def translate_epub_with_path(epub_path):
         f.write(buffer.getvalue())
     print(f"翻譯成功！ {output_fn}")
     print(f"翻譯耗時: {round(time.time() - t, 2)}s")
-    return 1, output_fn
+    return 1, Path.joinpath(directory, output_fn)
