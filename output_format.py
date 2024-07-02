@@ -8,6 +8,18 @@ class OutputFormat(Enum):
     MOBI = "mobi"
     PDF = "pdf"
     TXT = "txt"
+    AZW3 = "azw3"
+    LRF = "lrf"
+    OEB = "oeb"
+    PDB = "pdb"
+    RTF = "rtf"
+
+def find_format(target_format):
+    format_lookup = {format_name.value: format_name for format_name in OutputFormat}
+    member = format_lookup.get(target_format)
+    if not member:
+        member = OutputFormat.EPUB
+    return member
 
 def is_valid_format(format):
     return format in [item.value for item in OutputFormat]

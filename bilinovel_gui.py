@@ -2,7 +2,7 @@
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRegExp
 from PyQt5.QtGui import QIcon, QFont, QTextCursor, QPixmap, QColor,QRegExpValidator
 from PyQt5.QtWidgets import QApplication, QFrame, QGridLayout, QFileDialog
-from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, ExpandLayout, TextEdit, ImageLabel, LineEdit, PushButton, Theme, ProgressRing, setTheme, Theme, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor, qconfig, EditableComboBox, BoolValidator, SwitchSettingCard)
+from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, ExpandLayout, TextEdit, ImageLabel, LineEdit, PushButton, Theme, ProgressRing, setTheme, Theme, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor, qconfig, EditableComboBox, BoolValidator, SwitchSettingCard, ComboBoxSettingCard)
 from qfluentwidgets import FluentIcon as FIF
 import sys
 import base64
@@ -11,6 +11,7 @@ from resource.logo import logo_base64
 from resource.book import book_base64
 from bilinovel import *
 import configparser
+from output_format import OutputFormat, is_valid_format, find_format
 
 font_label = QFont('微软雅黑', 18)
 font_msg = QFont('微软雅黑', 11)
@@ -75,6 +76,9 @@ class SettingWidget(QFrame):
         self.themeMode = OptionsConfigItem(
         None, "ThemeMode", Theme.DARK, OptionsValidator(Theme), None)
 
+        self.outputFileTypeMode = OptionsConfigItem(
+            None, "outputFileTypeMode", find_format(self.parent.output_file_type), OptionsValidator(OutputFormat))
+
         self.toTraditionalChineseMode = OptionsConfigItem(
         None, "ToTraditionalChineseMode", self.parent.to_traditional_chinese, BoolValidator())
 
@@ -96,6 +100,15 @@ class SettingWidget(QFrame):
             parent=self.parent
         )
 
+        self.output_file_type_card = ComboBoxSettingCard(
+            self.outputFileTypeMode,
+            FIF.SAVE_AS,
+            self.tr('輸出檔案'),
+            self.tr('檔案類型'),
+            texts=[self.tr(format_name.value) for format_name in OutputFormat],
+            parent=self.parent
+        )
+
         self.language_card = OptionsSettingCard(
             self.toTraditionalChineseMode,
             FIF.LANGUAGE,
@@ -108,15 +121,16 @@ class SettingWidget(QFrame):
         )
 
         self.confirm_no_img_card = SwitchSettingCard(
-            FIF.ACCEPT_MEDIUM,
+            FIF.ADD_TO,
             self.tr('插图页面不存在时'),
-            self.tr("手动设定插图页面"),
+            self.tr("手动新增插图页面"),
             self.confirmNoImgMode,
             self.parent
         )
 
         self.setting_group.addSettingCard(self.download_path_card)
         self.setting_group.addSettingCard(self.theme_card)
+        self.setting_group.addSettingCard(self.output_file_type_card)
         self.setting_group.addSettingCard(self.language_card)
         self.setting_group.addSettingCard(self.confirm_no_img_card)
         self.expandLayout.setSpacing(28)
@@ -125,6 +139,7 @@ class SettingWidget(QFrame):
 
         self.download_path_card.clicked.connect(self.download_path_changed)
         self.theme_card.optionChanged.connect(self.theme_changed)
+        self.outputFileTypeMode.valueChanged.connect(self.output_file_type_changed)
         self.language_card.optionChanged.connect(self.language_changed)
         self.confirm_no_img_card.checkedChanged.connect(self.confirm_no_img_changed)
 
@@ -138,6 +153,12 @@ class SettingWidget(QFrame):
     def theme_changed(self):
         theme_name = self.theme_card.choiceLabel.text()
         self.parent.set_theme(theme_name)
+        if os.path.exists('./config'):
+            shutil.rmtree('./config')
+
+    def output_file_type_changed(self):
+        self.parent.output_file_type = self.outputFileTypeMode.value.value
+        self.parent.save_config_output_file_type(self.parent.output_file_type)
         if os.path.exists('./config'):
             shutil.rmtree('./config')
 
@@ -347,7 +368,7 @@ class Window(FluentWindow):
         self.out_path = self.get_config_out_path()
         self.to_traditional_chinese = self.get_config_to_traditional_chinese()
         self.confirm_no_img = self.get_config_confirm_no_img()
-        self.output_file_type = "mobi"
+        self.output_file_type = self.get_config_output_file_type()
         self.head = 'https://www.linovelib.com'
         split_str = '**************************************\n    '
         self.welcome_text = f'使用说明（共5条，记得下拉）：\n{split_str}1.哔哩轻小说{self.head}，根据书籍网址输入书号以及下载的卷号，书号最多输入4位阿拉伯数字。\n{split_str}2.例如小说网址是{self.head}/novel/2704.html，则书号输入2704。\n{split_str}3.要查询书籍卷号卷名等信息，则可以只输入书号不输入卷号，点击确定会返回书籍卷名称和对应的卷号。\n{split_str}4.根据上一步返回的信息确定自己想下载的卷号，要下载编号[2]对应卷，则卷号输入2。想下载多卷比如[1]至[3]对应卷，则卷号输入1-3或1,2,3（英文逗号分隔，编号也可以不连续）并点击确定。\n{split_str}5.若需更改.epub 输出语言请至设定页面，目前输出为{"繁體中文" if self.to_traditional_chinese else "简体中文"}。\n'
@@ -376,6 +397,27 @@ class Window(FluentWindow):
             with open(self.config_path, "w") as configfile:
                 config.write(configfile)
         return out_path
+    
+    def get_config_output_file_type(self):
+        """
+        get output_file_type variable from config file, else use default
+        
+            Returns:
+                output_file_type (str)
+        """
+        config = configparser.ConfigParser()
+        config.read(self.config_path)
+        try:
+            output_file_type = config.get('Settings', 'output_file_type')
+            assert(is_valid_format(output_file_type))
+        except:
+            if not config.has_section('Settings'):
+                config.add_section('Settings')
+            output_file_type = "epub"
+            config.set('Settings', 'output_file_type', output_file_type)
+            with open(self.config_path, "w") as configfile:
+                config.write(configfile)
+        return output_file_type
     
     def get_config_to_traditional_chinese(self):
         """
@@ -453,7 +495,7 @@ class Window(FluentWindow):
 
     def save_config_out_path(self, out_path):
         """
-        save new_out_path variable to config file
+        save out_path variable to config file
         """
         config = configparser.ConfigParser()
         config.read(self.config_path)
@@ -464,6 +506,23 @@ class Window(FluentWindow):
             config.set('Settings', 'out_path', out_path)
         else:
             print(f"{out_path} is not a directory. Not saving into {self.config_path}.")
+        
+        with open(self.config_path, "w") as configfile:
+            config.write(configfile)
+
+    def save_config_output_file_type(self, output_file_type):
+        """
+        save output_file_type variable to config file
+        """
+        config = configparser.ConfigParser()
+        config.read(self.config_path)
+        if not config.has_section('Settings'):
+            config.add_section('Settings')
+
+        if is_valid_format(output_file_type):
+            config.set('Settings', 'output_file_type', output_file_type)
+        else:
+            print(f"{output_file_type} is not a valid format. Not saving into {self.config_path}.")
         
         with open(self.config_path, "w") as configfile:
             config.write(configfile)
