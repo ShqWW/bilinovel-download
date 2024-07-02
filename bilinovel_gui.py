@@ -2,7 +2,7 @@
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRegExp
 from PyQt5.QtGui import QIcon, QFont, QTextCursor, QPixmap, QColor,QRegExpValidator
 from PyQt5.QtWidgets import QApplication, QFrame, QGridLayout, QFileDialog
-from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, ExpandLayout, TextEdit, ImageLabel, LineEdit, PushButton, Theme, ProgressRing, setTheme, Theme, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor, qconfig, EditableComboBox, BoolValidator, SwitchSettingCard, ComboBoxSettingCard)
+from qfluentwidgets import (setTheme, Theme, PushSettingCard, SettingCardGroup, ExpandLayout, TextEdit, ImageLabel, LineEdit, PushButton, Theme, ProgressRing, setTheme, Theme, OptionsSettingCard, OptionsConfigItem, OptionsValidator, FluentWindow, SubtitleLabel, NavigationItemPosition, setThemeColor, qconfig, EditableComboBox, BoolValidator, SwitchSettingCard, ComboBoxSettingCard, QConfig)
 from qfluentwidgets import FluentIcon as FIF
 import sys
 import base64
@@ -15,6 +15,10 @@ from output_format import OutputFormat, is_valid_format, find_format
 
 font_label = QFont('微软雅黑', 18)
 font_msg = QFont('微软雅黑', 11)
+
+def fake_save(self):
+    pass
+QConfig.save = fake_save
 
 class MainThread(QThread):
     def __init__(self, parent):
@@ -153,14 +157,10 @@ class SettingWidget(QFrame):
     def theme_changed(self):
         theme_name = self.theme_card.choiceLabel.text()
         self.parent.set_theme(theme_name)
-        if os.path.exists('./config'):
-            shutil.rmtree('./config')
 
     def output_file_type_changed(self):
         self.parent.output_file_type = self.outputFileTypeMode.value.value
         self.parent.save_config_output_file_type(self.parent.output_file_type)
-        if os.path.exists('./config'):
-            shutil.rmtree('./config')
 
     def language_changed(self):
         language = self.language_card.choiceLabel.text()
@@ -171,8 +171,6 @@ class SettingWidget(QFrame):
             self.parent.to_traditional_chinese = False
             print("输出设定成简体中文，若需更改请至设定页面")
         self.parent.save_config_to_traditional_chinese(self.parent.to_traditional_chinese)
-        if os.path.exists('./config'):
-            shutil.rmtree('./config')
 
     def confirm_no_img_changed(self):
         confirm_no_img = self.confirm_no_img_card.isChecked()
@@ -181,8 +179,6 @@ class SettingWidget(QFrame):
         else:
             self.parent.confirm_no_img = False
         self.parent.save_config_confirm_no_img(self.parent.confirm_no_img)
-        if os.path.exists('./config'):
-            shutil.rmtree('./config')
 
 class HomeWidget(QFrame):
 
