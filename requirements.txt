@@ -5,11 +5,6 @@ rich
 pyqt5
 PyQt-Fluent-Widgets[full]
 selenium
-zipfile
 opencc
 pathlib
 argparse
-glob
-time
-io
-configparser
