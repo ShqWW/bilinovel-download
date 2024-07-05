@@ -51,10 +51,12 @@ def convert_format(original_path, target_format):
     print(f"converting output format to .{target_format}")
     
     try:
+        CREATE_NO_WINDOW = 0x08000000
         subprocess.run(
             ["ebook-convert", original_path, output_path], 
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT
+            stderr=subprocess.STDOUT,
+            creationflags=CREATE_NO_WINDOW
         )
         print(f"successfully converted {original_path} to {output_path}")
         return 1, output_path
