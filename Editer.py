@@ -184,7 +184,9 @@ class Editer(object):
                 url = self.url_head + url_new
             else:
                 if return_next_chapter:
-                    next_chap_url = self.url_head + re.search(r'书签</a><a href="(.*?)">下一章</a>', content_html).group(1)
+                    next_chap_url = self.url_head + self.driver.execute_script(
+                        "return ReadParams.url_next;"
+                    )
                 break
         return text_chap, next_chap_url
 
@@ -287,7 +289,9 @@ class Editer(object):
 
     def get_prev_url(self, chap_no): #获取前一个章节的链接
         content_html = self.get_html(self.volume['chap_urls'][chap_no], is_gbk=False)
-        next_url = self.url_head + re.search(r'<div class="mlfy_page"><a href="(.*?)">上一章</a>', content_html).group(1)
+        next_url = self.url_head + self.driver.execute_script(
+            "return ReadParams.url_previous;"
+        )
         return next_url
 
     def prev_fix_url(self, chap_no, chap_num):  #反向递归修复缺失链接（后修复前），若成功修复返回True，否则返回False 
