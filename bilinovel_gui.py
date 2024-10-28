@@ -29,9 +29,9 @@ class MainThread(QThread):
         try:
             book_no = self.parent.editline_book.text()
             volumn_no = self.parent.editline_volumn.text()
-            out_path = read_config_dict()['download_path']
-            interval = read_config_dict()['interval']
-            num_thread = read_config_dict()['numthread']
+            out_path = read_config_dict('download_path')
+            interval = read_config_dict('interval')
+            num_thread = read_config_dict('numthread')
             downloader_router(out_path, book_no, volumn_no, interval, num_thread, True, self.parent.hang_signal, self.parent.progressring_signal, self.parent.cover_signal, self.parent.editline_hang)
             self.parent.end_signal.emit('')
         except Exception as e:
@@ -70,7 +70,7 @@ class SettingWidget(ScrollArea):
             self.setting_group
         )
 
-        theme_name = read_config_dict()['theme']
+        theme_name = read_config_dict('theme')
         if theme_name == 'Light':
             self.themeMode = OptionsConfigItem(
         None, "ThemeMode", Theme.LIGHT, OptionsValidator(Theme), None)
@@ -82,7 +82,7 @@ class SettingWidget(ScrollArea):
         None, "ThemeMode", Theme.AUTO, OptionsValidator(Theme), None)
 
         self.interval_card = RangeSettingCard(
-            RangeConfigItem("interval", "时间间隔", int(read_config_dict()["interval"]), RangeValidator(0, 1000)),
+            RangeConfigItem("interval", "时间间隔", int(read_config_dict("interval")), RangeValidator(0, 1000)),
             FIF.DATE_TIME,
             self.tr('下载时间间隔(毫秒)'),
             self.tr('如果页面频繁陷入超时，建议适当延长下载间隔'),
@@ -90,7 +90,7 @@ class SettingWidget(ScrollArea):
         )
 
         self.thread_card = RangeSettingCard(
-            RangeConfigItem("thread", "下载线程数量", int(read_config_dict()["numthread"]), RangeValidator(1, 10)),
+            RangeConfigItem("thread", "下载线程数量", int(read_config_dict("numthread")), RangeValidator(1, 10)),
             FIF.SPEED_HIGH,
             self.tr('图片下载线程数量'),
             self.tr('适当增加充分利用带宽,但不要太高'),
@@ -159,7 +159,7 @@ class SettingWidget(ScrollArea):
             self, self.tr("Choose folder"), self.parent.out_path)
         if new_path:
             write_config_dict("download_path", new_path)
-        self.download_path_card.contentLabel.setText(read_config_dict()["download_path"])
+        self.download_path_card.contentLabel.setText(read_config_dict("download_path"))
         
     
     def theme_changed(self):
@@ -171,7 +171,7 @@ class SettingWidget(ScrollArea):
         elif theme_name == '跟随系统':
             theme_mode = 'Auto' 
         write_config_dict("theme", theme_mode)
-        self.parent.set_theme(read_config_dict()["theme"])
+        self.parent.set_theme(read_config_dict("theme"))
         if os.path.exists('./config'):
             shutil.rmtree('./config')
 
@@ -371,16 +371,16 @@ class Window(FluentWindow):
         self.splashScreen.raise_()
 
         initialize_db()
-        self.out_path = read_config_dict()["download_path"]
+        self.out_path = read_config_dict("download_path")
         self.head = 'https://www.linovelib.com'
         split_str = '--------------------------------\n    '
         self.welcome_text = f'使用说明（必看）：\n{split_str}1.{self.head}，输入网站书号以及下载的卷号，例如网址是{self.head}/novel/2704.html，则书号输入2704。若不确定卷号，可以只输入书号，点击确定会返回书籍卷名称和对应的卷号。\n{split_str}3.要下载编号[2]对应卷，则卷号输入2。想下载多卷比如[1]至[3]对应卷，则卷号输入1-3或1,2,3（英文逗号分隔，编号可以不连续）。'
-        self.interval = read_config_dict()['interval']
+        self.interval = read_config_dict('interval')
         self.homeInterface = HomeWidget('Home Interface', self)
         self.settingInterface = SettingWidget('Setting Interface', self)
         self.initNavigation()
         self.initWindow()
-        QTimer.singleShot(50, lambda: self.set_theme(read_config_dict()['theme']))
+        QTimer.singleShot(50, lambda: self.set_theme(read_config_dict('theme')))
         QTimer.singleShot(2000, lambda: self.splashScreen.close())
         
     def initNavigation(self):
