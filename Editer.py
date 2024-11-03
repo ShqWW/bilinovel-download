@@ -195,7 +195,7 @@ class Editer(object):
         is_tansfer_rubbish_code = ('font-family: "read"' in content_html)
         bf = BeautifulSoup(content_html, 'html.parser')
         # text_with_head = bf.find('div', {'id': 'TextContent', 'class': 'read-content'}) 
-        text_with_head = bf.find('div', {'id': 'acontentz', 'class': 'bcontent'})
+        text_with_head = bf.find('div', {'id': 'acontent', 'class': 'acontent'})
         text_html = str(text_with_head)
         img_urlre_list = re.findall(r"<img .*?>", text_html)
         for img_urlre in img_urlre_list:
