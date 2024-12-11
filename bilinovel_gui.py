@@ -82,7 +82,7 @@ class SettingWidget(ScrollArea):
         None, "ThemeMode", Theme.AUTO, OptionsValidator(Theme), None)
 
         self.interval_card = RangeSettingCard(
-            RangeConfigItem("interval", "时间间隔", int(read_config_dict("interval")), RangeValidator(0, 2000)),
+            RangeConfigItem("interval", "时间间隔", int(read_config_dict("interval")), RangeValidator(0, 8000)),
             FIF.DATE_TIME,
             self.tr('下载时间间隔(毫秒)'),
             self.tr('如果页面频繁陷入超时，建议适当延长下载间隔'),
