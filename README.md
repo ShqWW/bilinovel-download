@@ -1,0 +1,82 @@
+
+<div align="center">
+  <img src="resource/logo.png" width="300" style="margin-right: 3000px;"/> 
+</div>
+
+<h1 align="center">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;哔哩轻小说和漫画EPUB下载器-Edge浏览器版
+</h1>
+
+
+
+
+
+[哔哩轻小说](https://www.linovelib.com)与
+[哔哩漫画](https://www.bilimanga.net)网站小说下载，EPUB打包。
+
+特性:
+
+* Fluent Design风格界面，下载进度与书籍封面显示，主题切换，下载目录自定义。
+* 前后端分离，同时支持命令行版本。
+* EPUB格式打包，支持多种阅读器。
+* 正文黑白插图和彩页插图智能排版。
+* 书籍批量下载。
+* 图片多线程下载。
+* 访问时间间隔自定义调整。
+* 缺失链接自动修复。
+* 自定义彩页。
+* ...................
+
+
+有建议或bug可以提issue，由于软件更新频繁，可以加QQ群获得更多信息：563072544
+
+图形界面使用[PyQt-Fluent-Widgets](https://pyqt-fluent-widgets.readthedocs.io/en/latest/index.html)界面编写。
+
+
+界面样例：
+<div align="center">
+  <img src="resource/example1.png" width="400"/>
+  <img src="resource/example2.png" width="400"/>
+</div>
+
+## 使用前安装需要的包
+```
+pip install -r requirements.txt -i https://pypi.org/simple/
+```
+## 使用命令行模式下载小说:
+```
+python bilinovel.py
+```
+
+## 使用命令行模式下载漫画:
+```
+python bilimanga.py
+```
+
+## 使用图形界面运行:
+```
+python main.py
+```
+在主界面选择下载小说/漫画
+
+## 使用pyinstaller打包:
+```
+pip install pyinstaller
+```
+```
+pyinstaller -F -w -i .\resource\logo.png -n bili-download .\main.py
+```
+
+## 相关项目：
+
+* [轻小说文库EPUB下载器](https://github.com/ShqWW/lightnovel-download)
+
+* [哔哩轻小说EPUB下载器](https://github.com/ShqWW/bilinovel-download)
+
+* [拷贝漫画EPUB下载器](https://github.com/ShqWW/copymanga-download)
+
+
+## EPUB书籍编辑和管理工具推荐：
+1. [Sigil](https://sigil-ebook.com/) 
+2. [Calibre](https://www.calibre-ebook.com/)
+
