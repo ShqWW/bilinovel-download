@@ -1,10 +1,9 @@
-
-<div align="center">
-  <img src="resource/logo.png" width="300" style="margin-right: 3000px;"/> 
+<div align="center" style="margin: 20px 0;">
+  <img src="resource/logo.png" style="max-width: 300px; height: auto;"/>
 </div>
 
-<h1 align="center">
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;哔哩轻小说和漫画EPUB下载器-Edge浏览器版
+<h1 align="center" style="margin-top: 20px;">
+  哔哩轻小说和漫画EPUB下载器-Edge浏览器版
 </h1>
 
 
