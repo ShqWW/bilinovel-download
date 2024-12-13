@@ -7,6 +7,7 @@ from qfluentwidgets import (setTheme, Theme, Theme, setTheme, Theme, FluentWindo
 from qfluentwidgets import FluentIcon as FIF
 import base64
 from resource.logo import logo_base64
+from resource.logo_big import logo_big_base64
 from backend.bilinovel.bilinovel_router import *
 
 from frontend.cfg_utils import *
@@ -18,6 +19,13 @@ from frontend.setting import SettingWidget
 class MainWindow(FluentWindow):
     def __init__(self):
         super().__init__()
+        pixmap = QPixmap()
+        pixmap.loadFromData(base64.b64decode(logo_big_base64))
+        # create splash screen
+        self.splashScreen = SplashScreen(QIcon(pixmap), self)
+        self.splashScreen.setIconSize(QSize(400, 400))
+        self.splashScreen.raise_()
+
         initialize_db()
         self.out_path = read_config_dict("download_path")
         self.head = 'https://www.linovelib.com'
@@ -29,10 +37,12 @@ class MainWindow(FluentWindow):
         self.settingInterface = SettingWidget('Setting Interface', self)
         self.initNavigation()
         self.initWindow()
+        QTimer.singleShot(50, lambda: self.set_theme(read_config_dict('theme')))
+        QTimer.singleShot(2000, lambda: self.splashScreen.close())
         
     def initNavigation(self):
-        self.addSubInterface(self.NovelInterface, FIF.BOOK_SHELF, '哔哩轻小说')
-        self.addSubInterface(self.MangaInterface, FIF.PHOTO, '哔哩漫画')
+        self.addSubInterface(self.NovelInterface, FIF.BOOK_SHELF, '小说')
+        self.addSubInterface(self.MangaInterface, FIF.PHOTO, '漫画')
         self.addSubInterface(self.settingInterface, FIF.SETTING, '设置', NavigationItemPosition.BOTTOM)
 
     def initWindow(self):
@@ -41,7 +51,7 @@ class MainWindow(FluentWindow):
         pixmap.loadFromData(base64.b64decode(logo_base64))
        
         self.setWindowIcon(QIcon(pixmap))
-        self.setWindowTitle('哔哩轻小说与漫画EPUB下载器')
+        self.setWindowTitle('哔哩轻小说漫画EPUB下载器')
         self.setFont(font_label)
 
         desktop = QApplication.desktop().availableGeometry()

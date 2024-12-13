@@ -1,13 +1,10 @@
 <div align="center" style="margin: 20px 0;">
-  <img src="resource/logo.png" style="max-width: 300px; height: auto;"/>
+  <img src="resource/logo_big.png" style="max-width: 300px; height: auto;"/>
 </div>
 
 <h1 align="center" style="margin-top: 20px;">
   哔哩轻小说和漫画EPUB下载器-Edge浏览器版
 </h1>
-
-
-
 
 
 [哔哩轻小说](https://www.linovelib.com)与
