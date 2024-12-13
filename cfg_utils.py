@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS config (
 );
 '''
 
-initial_config = {"download_path": './', "theme": "Auto", "interval": "0", "numthread": '4'}
+initial_config = {"download_path": './', "theme": "Auto", "interval": "4500", "numthread": '4'}
 
 def initialize_db():
     if not os.path.exists(DBPATH):

@@ -45,10 +45,7 @@ class Editer(object):
         self.get_meta_data(main_html)
         
        
-        try:
-            self.cover_url = re.search(r'src=\"(.*?)\"', str(bf.find('div', {"class": "book-img fl"}))).group(1)
-        except:
-            self.cover_url = 'cid'
+
             
         self.img_url_map = dict()
         self.volume_no = volume_no
@@ -158,6 +155,11 @@ class Editer(object):
         if span_tag:
             for a_tag in span_tag.find_all('a'):
                 self.tag_list.append(a_tag.text)
+
+        try:
+            self.cover_url = re.search(r'src=\"(.*?)\"', str(bf.find('div', {"class": "book-img fl"}))).group(1)
+        except:
+            self.cover_url = 'cid'
 
 
     
@@ -337,12 +339,13 @@ class Editer(object):
             self.color_chap_name = self.hand_in_color_page_name(is_gui, signal, editline)
 
         #没有彩页 但主页封面存在，将主页封面设为书籍封面 
-        if self.color_chap_name=='' and (not self.check_url(self.cover_url)):  
+        if self.color_chap_name=='':  
             self.is_color_page = False
-            self.img_url_map[self.cover_url] = str(len(self.img_url_map)).zfill(2)
-            print('**************')
-            print('提示：没有彩页，但主页封面存在，将使用主页的封面图片作为本卷图书封面')
-            print('**************')
+            if not self.check_url(self.cover_url):
+                self.img_url_map[self.cover_url] = str(len(self.img_url_map)).zfill(2)
+                print('**************')
+                print('提示：没有彩页，但主页封面存在，将使用主页的封面图片作为本卷图书封面')
+                print('**************')
     
     def check_url(self, url):#当检测有问题返回True
         return ('javascript' in url or 'cid' in url)   
