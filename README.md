@@ -1,5 +1,5 @@
 <div align="center" style="margin: 20px 0;">
-  <img src="resource/logo_big.png" style="max-width: 300px; height: auto;"/>
+  <img src="resource/logo_big.png" style="max-width: 100px; height: auto;"/>
 </div>
 
 <h1 align="center" style="margin-top: 20px;">
