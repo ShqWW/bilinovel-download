@@ -6,9 +6,11 @@
   哔哩轻小说和漫画EPUB下载器-Edge浏览器版
 </h1>
 
+<div align="center">
+  <img src="resource/example.png" width="800"/>
+</div>
 
-[哔哩轻小说](https://www.linovelib.com)与
-[哔哩漫画](https://www.bilimanga.net)网站小说下载，EPUB打包。
+[哔哩轻小说](https://www.linovelib.com)与[哔哩漫画](https://www.bilimanga.net)网站小说漫画下载与EPUB打包。
 
 特性:
 
@@ -23,16 +25,12 @@
 * 自定义彩页。
 * ...................
 
-
 有建议或bug可以提issue，由于软件更新频繁，可以加QQ群获得更多信息：563072544
 
 图形界面使用[PyQt-Fluent-Widgets](https://pyqt-fluent-widgets.readthedocs.io/en/latest/index.html)界面编写。
 
 
-界面样例：
-<div align="center">
-  <img src="resource/example.png" width="800"/>
-</div>
+
 
 ## 使用前安装需要的包
 ```
