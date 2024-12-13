@@ -31,7 +31,7 @@
 
 界面样例：
 <div align="center">
-  <img src="resource/example1.png" width="800"/>
+  <img src="resource/example.png" width="800"/>
 </div>
 
 ## 使用前安装需要的包
