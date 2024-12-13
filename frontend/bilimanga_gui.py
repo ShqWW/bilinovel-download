@@ -148,7 +148,7 @@ class MangaWidget(QFrame):
         self.btn_stop.setEnabled(False)
         
         self.msg_out = EmittingStr(textWritten=self.outputWritten)
-        self.text_screen.setText(self.parent.welcome_text) 
+        self.text_screen.setText(self.parent.manga_text) 
     
     def process_start(self):
         self.label_cover.setImage(self.book_icon)
@@ -172,7 +172,7 @@ class MangaWidget(QFrame):
             self.label_cover.setImage(self.book_icon)
             self.label_cover.setFixedSize(self.cover_w, self.cover_h)
             self.clear_signal.emit('')
-            self.text_screen.setText(self.parent.welcome_text) 
+            self.text_screen.setText(self.parent.manga_text) 
         
     def outputWritten(self, text):
         cursor = self.text_screen.textCursor()
@@ -189,7 +189,6 @@ class MangaWidget(QFrame):
     
     def display_cover(self, signal_msg):
         filepath, img_h, img_w = signal_msg
-        print(filepath)
         self.label_cover.setImage(filepath)
         self.label_cover.setFixedSize(int(img_w*self.cover_h/img_h), self.cover_h)
         

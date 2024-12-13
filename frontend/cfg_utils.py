@@ -23,7 +23,6 @@ def initialize_db():
                 VALUE TEXT
             );
             ''')
-            initial_config = {"download_path": './', "theme": "Auto", "interval": "0", "numthread": '4'}
             for key, value in initial_config.items():
                 cursor.execute("INSERT OR REPLACE INTO config (KEY, VALUE) VALUES (?, ?)", (key, value))
             conn.commit()

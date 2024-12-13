@@ -5,6 +5,8 @@ from qfluentwidgets import (Theme, PushSettingCard, SettingCardGroup, ExpandLayo
 
 from qfluentwidgets import FluentIcon as FIF
 from .cfg_utils import read_config_dict, write_config_dict
+import os
+import shutil
 
 
 class SettingWidget(ScrollArea):

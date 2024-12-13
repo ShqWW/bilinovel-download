@@ -1,5 +1,5 @@
-<div align="center" style="margin: 20px 0;">
-  <img src="resource/logo_big.png" style="max-width: 100px; height: auto;"/>
+<div align="center" style="margin: 10px 0;">
+  <img src="resource/logo_big.png" style="height: 100px;"/>
 </div>
 
 <h1 align="center" style="margin-top: 20px;">
@@ -31,8 +31,7 @@
 
 界面样例：
 <div align="center">
-  <img src="resource/example1.png" width="400"/>
-  <img src="resource/example2.png" width="400"/>
+  <img src="resource/example1.png" width="800"/>
 </div>
 
 ## 使用前安装需要的包

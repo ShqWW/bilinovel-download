@@ -143,7 +143,7 @@ class NovelWidget(QFrame):
         
         self.msg_out = EmittingStr(textWritten=self.outputWritten)
 
-        self.text_screen.setText(self.parent.welcome_text) 
+        self.text_screen.setText(self.parent.novel_text) 
     
     def process_start(self):
         self.label_cover.setImage(self.book_icon)
@@ -167,7 +167,7 @@ class NovelWidget(QFrame):
             self.label_cover.setImage(self.book_icon)
             self.label_cover.setFixedSize(self.cover_w, self.cover_h)
             self.clear_signal.emit('')
-            self.text_screen.setText(self.parent.welcome_text) 
+            self.text_screen.setText(self.parent.novel_text) 
         
     def outputWritten(self, text):
         cursor = self.text_screen.textCursor()

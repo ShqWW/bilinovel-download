@@ -2,8 +2,10 @@
 from PyQt5.QtCore import pyqtSignal, QObject
 from PyQt5.QtGui import QFont
 
-font_label = QFont('微软雅黑', 18)
-font_msg = QFont('微软雅黑', 12)
+font_label = QFont('幼圆', 18)
+font_label.setBold(True)
+font_msg = QFont('幼圆', 12)
+font_msg.setBold(True)
 
 class EmittingStr(QObject):
     textWritten = pyqtSignal(str)  # 定义一个发送str的信号
