@@ -29,9 +29,7 @@
 
 图形界面使用[PyQt-Fluent-Widgets](https://pyqt-fluent-widgets.readthedocs.io/en/latest/index.html)界面编写。
 
-
-
-
+系统要求:Windows10及以上
 ## 使用前安装需要的包
 ```
 pip install -r requirements.txt -i https://pypi.org/simple/
