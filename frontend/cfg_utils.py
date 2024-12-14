@@ -15,8 +15,8 @@ initial_config = {"download_path": './', "theme": "Auto", "interval": "4500", "n
 def initialize_db():
     if not os.path.exists(DBPATH):
         with sqlite3.connect(DBPATH) as conn:
-            conn.execute("PRAGMA journal_mode=WAL")
             cursor = conn.cursor()
+            cursor.execute("PRAGMA journal_mode=DELETE")
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS config (
                 KEY TEXT PRIMARY KEY,
@@ -40,5 +40,6 @@ def read_config_dict(key=None):
 def write_config_dict(key, value):
     with sqlite3.connect(DBPATH) as conn:
         cursor = conn.cursor()
+        cursor.execute("PRAGMA journal_mode=DELETE")
         cursor.execute("INSERT OR REPLACE INTO config (KEY, VALUE) VALUES (?, ?)", (key, value))
         conn.commit()

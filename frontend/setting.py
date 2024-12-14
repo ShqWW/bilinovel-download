@@ -115,7 +115,6 @@ class SettingWidget(ScrollArea):
         if new_path:
             write_config_dict("download_path", new_path)
         self.download_path_card.contentLabel.setText(read_config_dict("download_path"))
-        
     
     def theme_changed(self):
         theme_name = self.theme_card.choiceLabel.text()
@@ -127,13 +126,18 @@ class SettingWidget(ScrollArea):
             theme_mode = 'Auto' 
         write_config_dict("theme", theme_mode)
         self.parent.set_theme(read_config_dict("theme"))
-        if os.path.exists('./config'):
-            shutil.rmtree('./config')
+        self.delete()
 
     def interval_changed(self):
         interval = self.interval_card.valueLabel.text()
         write_config_dict("interval", interval)
+        self.delete()
 
     def thread_changed(self):
         num_thread = self.thread_card.valueLabel.text()
         write_config_dict("numthread", num_thread)
+        self.delete()
+    
+    def delete(self):
+        if os.path.exists('./config'):
+            shutil.rmtree('./config')
