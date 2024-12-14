@@ -77,14 +77,17 @@ def get_toc_html(title, chap_names):
 
 
 
-def get_content_html(title, author, publisher, tag_list, num_chap, num_img, img_exist=False):
+def get_content_html(book_name, volume_name, volume_no, author, publisher, brief, tag_list, num_chap, num_img, img_exist=False):
     content_html_template = """<?xml version="1.0" encoding="utf-8"?>
 <package version="2.0" unique-identifier="BookId" xmlns="http://www.idpf.org/2007/opf">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
     <dc:language>zh-CN</dc:language>
+    <meta name="calibre:series" content="{series_name}" />
+    <meta name="calibre:series_index" content="{series_no}"/>
     <dc:title>{title}</dc:title>
     <dc:creator>{author}</dc:creator>
     <dc:publisher>{publisher}</dc:publisher>
+    <dc:description>{brief}</dc:description>
 {subjects}
     <meta name="cover" content="x00.jpg"/>
   </metadata>
@@ -123,9 +126,12 @@ def get_content_html(title, author, publisher, tag_list, num_chap, num_img, img_
     spine_xcolor = '    <itemref idref="xcolor"/>\n' if img_exist else ''
 
     return content_html_template.format(
-        title=title,
+        series_name=book_name,
+        series_no = volume_no,
+        title=book_name+'-'+volume_name,
         author=author,
         publisher=publisher,
+        brief = brief,
         subjects=subjects,
         chapters=chapters,
         images=images,

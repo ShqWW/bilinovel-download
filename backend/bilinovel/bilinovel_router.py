@@ -8,7 +8,7 @@ def query_chaps(book_no):
     print('未输入卷号，将返回书籍目录信息......')
     editer = Editer(root_path='./out', book_no=book_no)
     print('--------------------------------')
-    print(editer.title, editer.author)
+    print(Editer.book_name, editer.author)
     print('--------------------------------')
     editer.get_chap_list()
     print('--------------------------------')
@@ -31,7 +31,7 @@ def download_single_volume(root_path,
     if not success:
         print('书籍信息获取失败')
         return
-    print(editer.title + '-' + editer.volume['book_name'], editer.author)
+    print(editer.book_name + '-' + editer.volume['volume_name'], editer.author)
     print('****************************')
     # if not editer.is_buffer():
     editer.check_volume(is_gui=is_gui, signal=hang_signal, editline=edit_line_hang)

@@ -7,13 +7,14 @@ import numpy as np
 import tempfile
 
 class Editer(object):
-    def __init__(self, title, bookname, author, brief, tag_list, chap_list, comic_root, out_root, delete_comic=False):
+    def __init__(self, book_name, volume_name, volume_no, author, brief, tag_list, chap_list, comic_root, out_root, delete_comic=False):
 
-        self.title = title
+        self.book_name = book_name
         self.author = author
         self.chap_list = chap_list
         self.comic_root = comic_root
-        self.bookname = bookname
+        self.volume_name = volume_name
+        self.volume_no = volume_no
         self.temp_path_io = tempfile.TemporaryDirectory()
         self.temp_path = self.temp_path_io.name
         self.out_root = out_root
@@ -40,10 +41,10 @@ class Editer(object):
             img_path = os.path.join(self.comic_root, check_chars(chap))
             imgs = os.listdir(img_path)
             img_no = 0
-            self.chap_first_imgs.append(str(chap_no+1).zfill(3) + '_' + str(0).zfill(4) + '.jpg')
+            self.chap_first_imgs.append(str(chap_no).zfill(3) + '_' + str(0).zfill(4) + '.jpg')
             for img_no, img in enumerate(imgs):
                 img_old_path = os.path.join(img_path, img)
-                img_new = str(chap_no + 1).zfill(3) + '_' + str(img_no).zfill(4) + '.jpg'
+                img_new = str(chap_no).zfill(3) + '_' + str(img_no).zfill(4) + '.jpg'
                 img_epub_path = os.path.join(self.epub_img_path, img_new)
                 shutil.copyfile(img_old_path, img_epub_path)
                 self.img_list.append(img_new)
@@ -61,7 +62,7 @@ class Editer(object):
 
 
         #封面
-        cover_path = os.path.join(self.epub_img_path, '000_0000.jpg')
+        cover_path = os.path.join(self.epub_img_path, 'cover.jpg')
         shutil.copyfile(os.path.join(self.comic_root, 'cover.jpg'), cover_path)
         textfile = os.path.join(self.epub_text_path, 'cover.xhtml')
         # img = cv2.imread(cover_path)
@@ -73,13 +74,13 @@ class Editer(object):
 
 
         #内容页
-        content_htmls = get_content_html(self.title, self.author, self.brief, self.tag_list, self.img_list)
+        content_htmls = get_content_html(self.book_name, self.volume_name, self.volume_no, self.author, self.brief, self.tag_list, self.img_list)
         textfile = os.path.join(self.epub_oebps_path, 'content.opf')
         with open(textfile, 'w+', encoding='utf-8') as f:
             f.write(content_htmls)
 
         #目录
-        toc_htmls = get_toc_html(self.title, self.chap_list, self.chap_first_imgs)
+        toc_htmls = get_toc_html(self.book_name, self.chap_list, self.chap_first_imgs)
         textfile = os.path.join(self.epub_oebps_path, 'toc.ncx')
         with open(textfile, 'w+', encoding='utf-8') as f:
             f.write(toc_htmls)
@@ -98,7 +99,7 @@ class Editer(object):
     
     def get_epub(self):
         print('正在打包EPUB......')
-        epub_file = os.path.join(self.out_root, check_chars(self.title+'-'+self.bookname) + '.epub')
+        epub_file = os.path.join(self.out_root, check_chars(self.book_name+'-'+self.volume_name) + '.epub')
         with zipfile.ZipFile(epub_file, "w", zipfile.ZIP_DEFLATED) as zf:
             for dirpath, dirnames, filenames in os.walk(self.epub_path):
                 fpath = dirpath.replace(self.epub_path,'')

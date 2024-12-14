@@ -9,7 +9,7 @@ def get_cover_html(img_w, img_h):
 <body>
   <div style="text-align: center; padding: 0pt; margin: 0pt;">
     <svg xmlns="http://www.w3.org/2000/svg" height="100%" preserveAspectRatio="xMidYMid meet" version="1.1" viewBox="0 0 {img_w} {img_h}" width="100%" xmlns:xlink="http://www.w3.org/1999/xlink">
-      <image width=\"{img_w}\" height=\"{img_h}\" xlink:href="../Images/000_0000.jpg"/>\n
+      <image width=\"{img_w}\" height=\"{img_h}\" xlink:href="../Images/cover.jpg"/>\n
     </svg>
   </div>
 </body>
@@ -65,29 +65,29 @@ def get_toc_html(title, chap_names, chap_imgs):
     return toc_html_template.format(title=title, nav_points=nav_points)
 
 
-def get_content_html(title, author, brief, tag_list, img_list):
+def get_content_html(book_name, volume_name, volume_no, author, brief, tag_list, img_list):
     content_htmls = '''<?xml version="1.0" encoding="utf-8"?>
 <package version="2.0" unique-identifier="BookId" xmlns="http://www.idpf.org/2007/opf">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
     <dc:language>zh-TW</dc:language>
+    <meta name="calibre:series" content="{series_name}" />
+    <meta name="calibre:series_index" content="{series_no}"/>
     <dc:title>{title}</dc:title>
     <dc:creator>{author}</dc:creator>
     <dc:description>{brief}</dc:description>
 {subjects}
-    <meta name="cover" content="x000_0000.jpg"/>
+    <meta name="cover" content="cover.jpg"/>
   </metadata>
   <manifest>
     <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
 {item1}   
     <item id="cover.xhtml" href="Text/cover.xhtml" media-type="application/xhtml+xml"/>
 {item2}
-    <item id="x000_0000.jpg" href="Images/000_0000.jpg" media-type="image/jpeg"/>
+    <item id="cover.jpg" href="Images/cover.jpg" media-type="image/jpeg"/>
   </manifest>
   <spine toc="ncx">
     <itemref idref="cover.xhtml"/>
-    <itemref idref="xcolor"/>
 {item3}
-    <itemref idref="cover.xhtml"/>
   </spine>
   <guide>
     <reference type="cover" title="封面" href="Text/cover.xhtml"/>
@@ -105,7 +105,9 @@ def get_content_html(title, author, brief, tag_list, img_list):
 
 
     return content_htmls.format(
-        title=title,
+        series_name=book_name,
+        series_no=volume_no,
+        title=book_name+'-'+volume_name,
         author=author,
         brief=brief,
         subjects=subjects,

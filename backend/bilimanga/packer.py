@@ -11,7 +11,7 @@ if __name__=='__main__':
     root = 'C:/Users/haoru/Desktop'
     comic_root = os.path.join(root, title+'-'+bookname)
     out_root= root
-    editer = Editer(title=title, author=author, brief=brief, tag_list=tag_list, chap_list=chap_list, comic_root=comic_root, out_root=out_root, bookname=bookname)
+    editer = Editer(book_name=title, author=author, brief=brief, tag_list=tag_list, chap_list=chap_list, comic_root=comic_root, out_root=out_root, volume_name=bookname)
     editer.pack_img()
     editer.typesetting()
     editer.get_epub()

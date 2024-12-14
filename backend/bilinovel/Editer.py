@@ -9,25 +9,22 @@ from rich.progress import track as tqdm
 from backend.bilinovel.utils import *
 import zipfile
 import re
-import pickle
+# import pickle
 from PIL import Image
 import time
 import threading
 from concurrent.futures import ThreadPoolExecutor
-import pickle
 from DrissionPage import Chromium, ChromiumOptions
 import tempfile
-
-
 
 lock = threading.RLock()
 
 class Editer(object):
-    def __init__(self, root_path, head='https://www.linovelib.com', book_no='0000', volume_no=1, interval=0, num_thread=1):
+    def __init__(self, root_path, book_no='0000', volume_no=1, interval=0, num_thread=1):
 
-        self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': head, 'cookie':'night=1'}
+        self.url_head = 'https://www.linovelib.com'
+        self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': self.url_head, 'cookie':'night=1'}
 
-        self.url_head = head
         self.interval = float(interval)/1000
         self.main_page = f'{self.url_head}/novel/{book_no}.html'
         self.cata_page = f'{self.url_head}/novel/{book_no}/catalog'
@@ -35,7 +32,6 @@ class Editer(object):
         self.color_chap_name = '插图'
         self.color_page_name = '彩页'
         self.html_buffer = dict()
-        
 
         path = r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'  # 请改为你电脑内Chrome可执行文件路径
         co = ChromiumOptions().set_browser_path(path)
@@ -48,7 +44,7 @@ class Editer(object):
         self.volume_no = volume_no
 
         self.epub_path = root_path
-        # self.temp_path = os.path.join(self.epub_path,  'temp_'+ check_chars(self.title) + '_' + str(self.volume_no))
+        # self.temp_path = os.path.join(self.epub_path,  'temp_'+ check_chars(self.book_name) + '_' + str(self.volume_no))
         self.temp_path_io = tempfile.TemporaryDirectory()
         self.temp_path = self.temp_path_io.name
     
@@ -62,7 +58,6 @@ class Editer(object):
         
     # 获取html文档内容
     def get_html(self, url, is_gbk=False):
-        
         while True:
             if self.interval>0:
                 time.sleep(self.interval)
@@ -78,11 +73,7 @@ class Editer(object):
             break
         return req
     
-    def get_html_content(self, url, is_buffer=False, use_mobile=False):
-        if use_mobile:
-            header = self.header_mobile
-        else:
-            header = self.header
+    def get_html_content(self, url, is_buffer=False):
         if is_buffer:
             while not url in self.html_buffer.keys():
                 time.sleep(0.1) 
@@ -90,7 +81,7 @@ class Editer(object):
             return self.html_buffer[url]
         while True:
             try:
-                req=requests.get(url, headers=header)
+                req=requests.get(url, headers=self.header)
                 break
             except Exception as e:
                 pass
@@ -101,8 +92,13 @@ class Editer(object):
     
     def get_meta_data(self, main_html):
         bf = BeautifulSoup(main_html, 'html.parser')
-        self.title = bf.find('meta', {"property": "og:novel:book_name"})['content']
+        self.book_name = bf.find('meta', {"property": "og:novel:book_name"})['content']
         self.author = bf.find('meta', {"property": "og:novel:author"})['content']
+
+        brief = bf.find('div', {"class": "book-dec Jbook-dec hide"})
+        brief_to_delete = brief.find('div')
+        brief_to_delete.extract() if brief_to_delete is not None else 0
+        self.brief = brief.find_all('p')[0].text
         
         book_meta = bf.find('div', class_='book-label')
         self.publisher = book_meta.find('a', class_='label').text
@@ -111,6 +107,7 @@ class Editer(object):
         if span_tag:
             for a_tag in span_tag.find_all('a'):
                 self.tag_list.append(a_tag.text)
+                
         try:
             self.cover_url_back = re.search(r'src=\"(.*?)\"', str(bf.find('div', {"class": "book-img fl"}))).group(1)
         except:
@@ -136,7 +133,7 @@ class Editer(object):
         volume_array = self.volume_no - 1
         chap_html = chap_html_list[volume_array]
 
-        self.volume['book_name'] = chap_html.find('h2', {'class': 'v-line'}).text
+        self.volume['volume_name'] = chap_html.find('h2', {'class': 'v-line'}).text
         chap_list = chap_html.find_all('li', {'class', 'col-4'})
         for chap_html in chap_list:
             self.volume['chap_names'].append(chap_html.text)
@@ -153,7 +150,6 @@ class Editer(object):
             return
         else:
             return chap_html_list
-
 
     def get_page_text(self, content_html):
         is_tansfer_rubbish_code = ('font-family: "read"' in content_html)
@@ -247,8 +243,6 @@ class Editer(object):
 
             if is_fix_next_chap_url: 
                 self.volume['chap_urls'][chap_no+1] = next_chap_url #正向修复
-
-
         
         # 将彩页中后文已经出现的图片删除，避免重复
         if self.is_color_page: #判断彩页是否存在
@@ -260,7 +254,6 @@ class Editer(object):
         
             with open(textfile, 'w+', encoding='utf-8') as f:
                 f.write(text_html_color)
-                
 
     def get_image(self, is_gui=False, signal=None):
         for url in self.img_url_map.keys():
@@ -372,12 +365,12 @@ class Editer(object):
         if self.is_color_page:
             ind = self.volume["chap_names"].index(self.color_chap_name)
             self.volume["chap_names"].pop(ind)
-        toc_htmls = get_toc_html(self.title, self.volume["chap_names"])
+        toc_htmls = get_toc_html(self.book_name, self.volume["chap_names"])
         with open(os.path.join(self.temp_path, 'OEBPS/toc.ncx'), 'w+', encoding='utf-8') as f:
             f.write(toc_htmls)
 
     def get_content(self):
-        content_html = get_content_html(self.title + '-' + self.volume['book_name'], self.author, self.publisher, self.tag_list, len(self.volume["chap_names"]), len(os.listdir(self.img_path)), self.is_color_page)
+        content_html = get_content_html(self.book_name, self.volume['volume_name'], self.volume_no, self.author, self.publisher, self.brief, self.tag_list, len(self.volume["chap_names"]), len(os.listdir(self.img_path)), self.is_color_page)
         with open(os.path.join(self.temp_path, 'OEBPS/content.opf'), 'w+', encoding='utf-8') as f:
             f.write(content_html)
 
@@ -388,10 +381,9 @@ class Editer(object):
             f.write(get_container_html())
         with open(os.path.join(self.temp_path, 'mimetype'), 'w+', encoding='utf-8') as f:
             f.write('application/epub+zip')
-        
 
     def get_epub(self):
-        epub_file = self.epub_path + '/' + check_chars(self.title + '-' + self.volume['book_name']) + '.epub'
+        epub_file = self.epub_path + '/' + check_chars(self.book_name + '-' + self.volume['volume_name']) + '.epub'
         with zipfile.ZipFile(epub_file, "w", zipfile.ZIP_DEFLATED) as zf:
             for dirpath, _, filenames in os.walk(self.temp_path):
                 fpath = dirpath.replace(self.temp_path,'') #这一句很重要，不replace的话，就从根目录开始复制
@@ -401,22 +393,22 @@ class Editer(object):
         self.temp_path_io.cleanup()
         return epub_file
     
-    def buffer(self):
-        filename = 'buffer.pkl'
-        filepath = os.path.join(self.temp_path, filename)
-        if os.path.isfile(filepath):
-            with open(filepath, 'rb') as f:
-                self.volume, self.img_url_map = pickle.load(f)
-                self.text_path = os.path.join(self.temp_path, 'OEBPS/Text')
-                os.makedirs(self.text_path, exist_ok=True)
-                self.img_path = os.path.join(self.temp_path,  'OEBPS/Images')
-                os.makedirs(self.img_path, exist_ok=True)
-                self.color_chap_name = self.volume['color_chap_name']
-        else:
-            with open(filepath, 'wb') as f:
-                pickle.dump((self.volume ,self.img_url_map), f)
+    # def buffer(self):
+    #     filename = 'buffer.pkl'
+    #     filepath = os.path.join(self.temp_path, filename)
+    #     if os.path.isfile(filepath):
+    #         with open(filepath, 'rb') as f:
+    #             self.volume, self.img_url_map = pickle.load(f)
+    #             self.text_path = os.path.join(self.temp_path, 'OEBPS/Text')
+    #             os.makedirs(self.text_path, exist_ok=True)
+    #             self.img_path = os.path.join(self.temp_path,  'OEBPS/Images')
+    #             os.makedirs(self.img_path, exist_ok=True)
+    #             self.color_chap_name = self.volume['color_chap_name']
+    #     else:
+    #         with open(filepath, 'wb') as f:
+    #             pickle.dump((self.volume ,self.img_url_map), f)
     
-    def is_buffer(self):
-        filename = 'buffer.pkl'
-        filepath = os.path.join(self.temp_path, filename)
-        return os.path.isfile(filepath)
+    # def is_buffer(self):
+    #     filename = 'buffer.pkl'
+    #     filepath = os.path.join(self.temp_path, filename)
+    #     return os.path.isfile(filepath)

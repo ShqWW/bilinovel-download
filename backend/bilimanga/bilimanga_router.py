@@ -6,7 +6,7 @@ def query_chaps(book_no):
     print('未输入卷号，将返回书籍目录信息......')
     downloader = Downloader(root_path='./out', book_no=book_no)
     print('--------------------------------')
-    print(downloader.title, downloader.author)
+    print(downloader.book_name, downloader.author)
     print('--------------------------------')
     downloader.get_chap_list()
     print('--------------------------------')
@@ -29,7 +29,7 @@ def download_single_volume(root_path,
     if not success:
         print('书籍信息获取失败')
         return
-    print(downloader.title + '-' + downloader.volume['book_name'], downloader.author)
+    print(downloader.book_name + '-' + downloader.volume['volume_name'], downloader.author)
     print('****************************')
     # if not editer.is_buffer():
     downloader.check_volume(is_gui=is_gui, signal=hang_signal, editline=edit_line_hang)
@@ -38,7 +38,7 @@ def download_single_volume(root_path,
     downloader.get_manga(is_gui=is_gui, signal=progressring_signal)
     print('*********************')
     chap_list = downloader.volume['chap_names']
-    editer = Editer(downloader.title, downloader.volume['book_name'], downloader.author, downloader.brief, downloader.tag_list,chap_list, downloader.comic_path, root_path, delete_comic=0)
+    editer = Editer(downloader.book_name, downloader.volume['volume_name'], downloader.volume_no, downloader.author, downloader.brief, downloader.tag_list,chap_list, downloader.comic_path, root_path, delete_comic=0)
     editer.get_cover(is_gui=is_gui, signal=cover_signal)
     editer.pack_img()
     editer.typesetting()

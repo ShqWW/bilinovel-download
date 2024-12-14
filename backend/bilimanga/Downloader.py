@@ -42,7 +42,7 @@ class Downloader(object):
         self.volume_no = volume_no
 
         self.epub_path = root_path
-        self.comic_path = os.path.join(self.epub_path,  check_chars(self.title) + '_' + str(self.volume_no))
+        self.comic_path = os.path.join(self.epub_path,  check_chars(self.book_name) + '_' + str(self.volume_no))
         self.temp_path_io = tempfile.TemporaryDirectory()
         self.temp_path = self.temp_path_io.name
         
@@ -74,7 +74,7 @@ class Downloader(object):
     
     def get_meta_data(self, main_html):
         bf = BeautifulSoup(main_html, 'html.parser')
-        self.title = bf.find('h1', class_='book-title').text
+        self.book_name = bf.find('h1', class_='book-title').text
         self.author = bf.find('span', class_='authorname').text 
         self.brief = bf.find('section', id='bookSummary').text.replace('\n', '')
 
@@ -105,7 +105,7 @@ class Downloader(object):
         volume_array = self.volume_no - 1
         chap_html = chap_html_list[volume_array]
 
-        self.volume['book_name'] = chap_html.find('h3').text
+        self.volume['volume_name'] = chap_html.find('h3').text
         chap_list = chap_html.find_all('li', {'class', 'chapter-li jsChapter'})
         for chap_html in chap_list:
             chap_name = chap_html.find('span').text
