@@ -7,7 +7,7 @@
 </h1>
 
 <div align="center">
-  <img src="resource/mainpage.png" width="800"/>
+  <img src="resource/mainpage.png" width="600"/>
 </div>
 
 [哔哩轻小说](https://www.linovelib.com)下载与EPUB打包-Edge浏览器版
