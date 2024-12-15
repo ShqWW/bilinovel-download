@@ -1,17 +1,16 @@
-
-<div align="center">
-  <img src="resource/logo_big.png" width="300" style="margin-right: 3000px;"/> 
+<div align="center" style="margin: 10px 0;">
+  <img src="resource/logo_big.png" style="height: 100px;"/>
 </div>
 
-<h1 align="center">
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EPUB下载器
+<h1 align="center" style="margin-top: 20px;">
+  EPUB下载器-Edge浏览器版
 </h1>
 
+<div align="center">
+  <img src="resource/example.png" width="800"/>
+</div>
 
-
-
-
-[哔哩轻小说](https://www.linovelib.com)(linovelib)网站小说下载，EPUB打包。
+[哔哩轻小说](https://www.linovelib.com)与[哔哩漫画](https://www.bilimanga.net)网站小说下载与EPUB打包。
 
 特性:
 
@@ -21,45 +20,38 @@
 * 正文黑白插图和彩页插图智能排版。
 * 书籍批量下载。
 * 图片多线程下载。
-<!-- * <del>多线程预缓存策略，下载速度快。</del>(网站限制访问频率，默认单线程下载) -->
+* 访问时间间隔自定义调整。
 * 缺失链接自动修复。
 * 自定义彩页。
 * ...................
-
 
 有建议或bug可以提issue，由于软件更新频繁，可以加QQ群获得更多信息：563072544
 
 图形界面使用[PyQt-Fluent-Widgets](https://pyqt-fluent-widgets.readthedocs.io/en/latest/index.html)界面编写。
 
-[release](https://github.com/ShqWW/bilinovel-download/releases/tag/exe)页面发布了已经打包好的exe可执行程序，包括图形化版本和命令行版本(系统最低要求Windows 10)。
+系统要求：Windows10及以上
 
-界面样例：
-<div align="center">
-  <img src="resource/example1.png" width="400"/>
-  <img src="resource/example2.png" width="400"/>
-</div>
-
-PS：暂不支持漫画的排版（本来也没几个漫画<
 ## 使用前安装需要的包
 ```
 pip install -r requirements.txt -i https://pypi.org/simple/
 ```
-## 使用命令行模式运行(无需安装图形界面库，支持Linux):
+## 使用命令行模式下载小说:
 ```
 python bilinovel.py
 ```
 
 ## 使用图形界面运行:
 ```
-python bilinovel_gui.py
+python main.py
 ```
+在主界面选择下载小说/漫画
 
 ## 使用pyinstaller打包:
 ```
 pip install pyinstaller
 ```
 ```
-pyinstaller -F -w -i .\resource\logo.png .\bilinovel_gui.py
+pyinstaller -F -w -i .\resource\logo.png -n bili-download .\main.py
 ```
 
 ## 相关项目：
