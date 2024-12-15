@@ -47,7 +47,7 @@ class MainWindow(FluentWindow):
         pixmap.loadFromData(base64.b64decode(logo_base64))
        
         self.setWindowIcon(QIcon(pixmap))
-        self.setWindowTitle('哔哩轻小说EPUB下载器')
+        self.setWindowTitle('哔哩轻小说EPUB下载器-Edge浏览器版')
         self.setFont(font_label)
 
         desktop = QApplication.desktop().availableGeometry()
