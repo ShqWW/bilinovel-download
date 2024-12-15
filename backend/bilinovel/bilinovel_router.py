@@ -8,7 +8,7 @@ def query_chaps(book_no):
     print('未输入卷号，将返回书籍目录信息......')
     editer = Editer(root_path='./out', book_no=book_no)
     print('--------------------------------')
-    print(Editer.book_name, editer.author)
+    print(editer.book_name, editer.author)
     print('--------------------------------')
     editer.get_chap_list()
     print('--------------------------------')

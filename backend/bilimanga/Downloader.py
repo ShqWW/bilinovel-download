@@ -137,7 +137,6 @@ class Downloader(object):
         if self.color_page>1:   #彩页数量大于1的情况下添加彩页， 否则当没有彩页处理
             self.volume['chap_names'] = [self.color_page_name] + self.volume['chap_names']
         self.temp_path_io.cleanup()
-        
             
     def get_chap_image(self, chap_no, chap_name, is_gui=False, signal=None, is_color_page=False):
         save_path = os.path.join(self.comic_path, chap_name)
