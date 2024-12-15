@@ -1,5 +1,5 @@
 <div align="center" style="margin: 10px 0;">
-  <img src="resource/logo_big.png" style="height: 100px;"/>
+  <img src="resource/logo_big.png" style="height: 80px;"/>
 </div>
 
 <h1 align="center" style="margin-top: 20px;">
@@ -7,10 +7,10 @@
 </h1>
 
 <div align="center">
-  <img src="resource/example.png" width="800"/>
+  <img src="resource/mainpage.png" width="800"/>
 </div>
 
-[哔哩轻小说](https://www.linovelib.com)与[哔哩漫画](https://www.bilimanga.net)网站小说下载与EPUB打包。
+[哔哩轻小说](https://www.linovelib.com)下载与EPUB打包-Edge浏览器版
 
 特性:
 
@@ -51,7 +51,7 @@ python main.py
 pip install pyinstaller
 ```
 ```
-pyinstaller -F -w -i .\resource\logo.png -n bili-download .\main.py
+pyinstaller -F -w -i .\resource\logo.png -n bilinovel-download .\main.py
 ```
 
 ## 相关项目：
