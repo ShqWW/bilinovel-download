@@ -183,7 +183,13 @@ class Editer(object):
                 if text_html[symbol_index-1] != '\n':
                     text_html = text_html[:symbol_index] + '\n' + text_html[symbol_index:]
         
-        text = BeautifulSoup(text_html, 'html.parser').find('div', class_='read-content', id='TextContent').decode_contents()
+        text = BeautifulSoup(text_html, 'html.parser').find('div', class_='read-content', id='TextContent')
+
+        # 删除反爬提示元素
+        p2207_element = text.find('p2207')
+        if p2207_element:
+            p2207_element.decompose()  
+        text = text.decode_contents()
         if text.startswith('\n'):
             text = text[1:]
         #去除乱码
