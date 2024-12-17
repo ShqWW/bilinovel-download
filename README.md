@@ -69,5 +69,5 @@ pyinstaller -F -w -i .\resource\logo.png -n bilinovel-download .\main.py
 ## EPUB书籍编辑和管理工具推荐：
 1. [Sigil](https://sigil-ebook.com/) 
 2. [Calibre](https://www.calibre-ebook.com/)
-3. [Kavita](https://www.kavitareader.com/)归档整理。
+3. [Kavita](https://www.kavitareader.com/)
 
