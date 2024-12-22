@@ -154,7 +154,7 @@ class Editer(object):
     def get_page_text(self, content_html):
         is_tansfer_rubbish_code = ('font-family: "read"' in content_html)
         bf = BeautifulSoup(content_html, 'html.parser')
-        text_with_head = bf.find('div', {'id': 'TextContent', 'class': 'read-content'}) 
+        text_with_head = bf.find('div', {'id': 'TextContent', 'class': 'ads read-content1'}) 
         
         self.remove_element(text_with_head, id='show-more-images')
         self.remove_element(text_with_head, class_='google-auto-placed ap_container')
@@ -183,9 +183,13 @@ class Editer(object):
                 if text_html[symbol_index-1] != '\n':
                     text_html = text_html[:symbol_index] + '\n' + text_html[symbol_index:]
         
-        text = BeautifulSoup(text_html, 'html.parser').find('div', class_='read-content', id='TextContent').decode_contents()
+        text = BeautifulSoup(text_html, 'html.parser').find('div', class_='ads read-content1', id='TextContent')
+       
+        text = text.decode_contents()
         if text.startswith('\n'):
             text = text[1:]
+        if text.endswith('\n\n'):
+            text = text[:-1]
         #去除乱码
         if is_tansfer_rubbish_code:
             text = replace_rubbish_text(text)
