@@ -181,7 +181,6 @@ def replace_rubbish_text(content_html):
         replace_strr = rubbish_secret_map.get(blank_char)
         if replace_strr is not None:
             sb.append(replace_strr)
-            print(replace_strr)
         elif blank_char in chinese_punctuation:
             sb.append(blank_char)
     last_p.string = ''.join(sb)
