@@ -198,9 +198,14 @@ class Editer(object):
             text = text[1:]
         if text.endswith('\n\n'):
             text = text[:-1]
+
+        msg = '<br/><br/><br/>————————————以下为告示，读者请无视——————————————<p>'
+        text = text[:text.find(msg)]
+
         #去除乱码
         if is_tansfer_rubbish_code:
             text = replace_rubbish_text(text)
+        print(text[-200:])
         return text
 
     def remove_element(self, bf_item, id=None, class_=None):
