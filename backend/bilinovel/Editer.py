@@ -205,7 +205,6 @@ class Editer(object):
         #去除乱码
         if is_tansfer_rubbish_code:
             text = replace_rubbish_text(text)
-        print(text[-200:])
         return text
 
     def remove_element(self, bf_item, id=None, class_=None):
