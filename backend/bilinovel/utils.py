@@ -150,6 +150,25 @@ def check_chars(win_chars):
             new_chars += char
     return new_chars
 
+# def replace_rubbish_text(content_html):
+#     soup = BeautifulSoup(content_html, 'html.parser')
+#     ps = soup.find_all('p')
+#     if not ps:
+#         return str(soup)
+#     last_p = ps[-1]
+#     text = last_p.get_text()
+#     sb = []
+#     for blank_char in text:
+#         # if blank_char in blank_list:
+#         #     continue
+#         replacement = rubbish_secret_map.get(blank_char)
+#         t = replacement if replacement else blank_char
+#         sb.append(t)
+#     last_p.string = ''.join(sb)
+#     return str(soup)
+
+chinese_punctuation = "，。！？、；：“”‘’（）《》〈〉【】『』〖〗…—～＋－＝×÷·—‘’“”『』【】（）《》〈〉「」『』〖〗〘〙〚〛〚〛〘〙〖〗〘〙〚〛〘〙〖〗〘〙"
+
 def replace_rubbish_text(content_html):
     soup = BeautifulSoup(content_html, 'html.parser')
     ps = soup.find_all('p')
@@ -159,10 +178,10 @@ def replace_rubbish_text(content_html):
     text = last_p.get_text()
     sb = []
     for blank_char in text:
-        if blank_char in blank_list:
-            continue
-        replacement = rubbish_secret_map.get(blank_char)
-        t = replacement if replacement else blank_char
-        sb.append(t)
+        replace_strr = rubbish_secret_map.get(blank_char)
+        if replace_strr is not None:
+            sb.append(replace_strr)
+        elif blank_char in chinese_punctuation:
+            sb.append(blank_char)
     last_p.string = ''.join(sb)
     return str(soup)

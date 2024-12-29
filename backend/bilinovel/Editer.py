@@ -184,12 +184,24 @@ class Editer(object):
                     text_html = text_html[:symbol_index] + '\n' + text_html[symbol_index:]
         
         text = BeautifulSoup(text_html, 'html.parser').find('div', class_='ads read-content1', id='TextContent')
+   
+
+        #删除反爬提示元素
+        match = re.findall(r'<p(\d+)>', str(text))
+        if len(match) > 0:
+            warn_element = text.find(f'p{match[0]}')
+            warn_element.decompose()  
+
        
         text = text.decode_contents()
         if text.startswith('\n'):
             text = text[1:]
         if text.endswith('\n\n'):
             text = text[:-1]
+
+        msg = '<br/><br/><br/>————————————以下为告示，读者请无视——————————————<p>'
+        text = text[:text.find(msg)]
+
         #去除乱码
         if is_tansfer_rubbish_code:
             text = replace_rubbish_text(text)
