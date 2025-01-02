@@ -6,7 +6,7 @@ from backend.bilinovel.bilinovel_router import downloader_router
 def parse_args():
     """Parse input arguments."""
     parser = argparse.ArgumentParser(description='config')
-    parser.add_argument('--interval', default=400, type=int)
+    parser.add_argument('--interval', default=4500, type=int)
     parser.add_argument('--num_thread', default='1', type=int)
     parser.add_argument('--out_path', default='./out', type=str)
     args = parser.parse_args()

@@ -59,8 +59,6 @@ class Editer(object):
     # 获取html文档内容
     def get_html(self, url, is_gbk=False):
         while True:
-            if self.interval>0:
-                time.sleep(self.interval)
             self.tab.get(url)
             req = self.tab.html
             while '<title>Access denied | www.linovelib.com used Cloudflare to restrict access</title>' in req:
@@ -71,6 +69,8 @@ class Editer(object):
             if is_gbk:
                 req.encoding = 'GBK'       #这里是网页的编码转换，根据网页的实际需要进行修改，经测试这个编码没有问题
             break
+        if self.interval>0:
+            time.sleep(self.interval)
         return req
     
     def get_html_content(self, url, is_buffer=False):
@@ -152,7 +152,8 @@ class Editer(object):
             return chap_html_list
 
     def get_page_text(self, content_html):
-        is_tansfer_rubbish_code = ('font-family: "read"' in content_html)
+        is_tansfer_rubbish_code = 'eval(function(p,a,c,k,e,r)' in content_html
+        # is_tansfer_rubbish_code = ('font-family: "read"' in content_html)
         bf = BeautifulSoup(content_html, 'html.parser')
         text_with_head = bf.find('div', {'id': 'TextContent', 'class': 'ads read-content1'}) 
         
