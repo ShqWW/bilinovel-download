@@ -66,7 +66,7 @@ class MangaWidget(QFrame):
         
         # self.editline_book.setText('2059')
         # self.editline_volumn.setText('3')
-        self.editline_color_page.setText('0')
+        self.editline_color_page.setText('1')
         self.book_icon = QPixmap()
         self.book_icon.loadFromData(base64.b64decode(book_base64))
         self.cover_w, self.cover_h = 152, 230
