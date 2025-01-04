@@ -152,7 +152,7 @@ class Editer(object):
             return chap_html_list
 
     def get_page_text(self, content_html):
-        is_tansfer_rubbish_code = 'eval(function(p,a,c,k,e,r)' in content_html
+        is_tansfer_rubbish_code = 'woff2' in content_html
         # is_tansfer_rubbish_code = ('font-family: "read"' in content_html)
         bf = BeautifulSoup(content_html, 'html.parser')
         text_with_head = bf.find('div', {'id': 'TextContent', 'class': 'ads read-content1'}) 
