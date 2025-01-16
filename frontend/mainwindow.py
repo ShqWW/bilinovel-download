@@ -30,7 +30,7 @@ class MainWindow(FluentWindow):
         self.out_path = read_config_dict("download_path")
         split_str = '--------------------------------\n    '
         self.novel_text = f'使用说明（必看）：\n{split_str}1. https://www.linovelib.com，输入书号以及下载的卷号，例如网址是https://www.linovelib.com/novel/2704.html，则书号输入2704。若不确定卷号，可以只输入书号，点击确定会返回书籍卷名称和对应的卷号。\n{split_str}3.要下载编号[2]对应卷，则卷号输入2。想下载多卷比如[1]至[3]对应卷，则卷号输入1-3或1,2,3（英文逗号分隔，编号可以不连续）。'
-        self.manga_text = f'使用说明（必看）：\n{split_str}1.https://www.bilimanga.net，输入漫画号以及下载的卷号，例如网址是https://www.bilimanga.net/detail/498.html，则漫号输入498。若不确定卷号，可以只输入漫号，点击确定会返回漫画卷名称和对应的卷号。\n{split_str}3.要下载编[2]对应卷，则卷号输入2。想下载多卷比如[1]至[3]对应卷，则卷号输入1-3或1,2,3（英文逗号分隔，编号可以不连续）。'
+        self.manga_text = f'使用说明（必看）：\n{split_str}1.https://www.bilicomic.net，输入漫画号以及下载的卷号，例如网址是https://www.bilimanga.net/detail/498.html，则漫号输入498。若不确定卷号，可以只输入漫号，点击确定会返回漫画卷名称和对应的卷号。\n{split_str}3.要下载编[2]对应卷，则卷号输入2。想下载多卷比如[1]至[3]对应卷，则卷号输入1-3或1,2,3（英文逗号分隔，编号可以不连续）。'
         self.interval = read_config_dict('interval')
         self.NovelInterface = NovelWidget('Novel Interface', self)
         self.MangaInterface = MangaWidget('Manga Interface', self)

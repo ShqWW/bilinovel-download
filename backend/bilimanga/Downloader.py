@@ -17,7 +17,7 @@ from .utils import convert_avif_to_jpg
 lock = threading.RLock()
 
 class Downloader(object):
-    def __init__(self, root_path, head='https://www.bilimanga.net', book_no='0000', volume_no=1, interval=0, color_page = 0):
+    def __init__(self, root_path, head='https://www.bilicomic.net', book_no='0000', volume_no=1, interval=0, color_page = 0):
 
         self.header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47', 'referer': head, 'cookie':'night=1'}
 
