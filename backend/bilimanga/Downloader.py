@@ -139,7 +139,7 @@ class Downloader(object):
         self.temp_path_io.cleanup()
             
     def get_chap_image(self, chap_no, chap_name, is_gui=False, signal=None, is_color_page=False):
-        save_path = os.path.join(self.comic_path, chap_name)
+        save_path = os.path.join(self.comic_path, check_chars(chap_name))
         os.makedirs(save_path, exist_ok=True)
         chap_html = BeautifulSoup(self.tab.html, 'html.parser')
         img_elements = chap_html.find_all('img', class_='imagecontent')

@@ -118,7 +118,7 @@ class MangaWidget(QFrame):
 
         self.gridLayout.addLayout(self.screen_layout, 4, 0, 2, 2)
 
-        self.screen_layout.addWidget(self.progressRing, 0, 1, Qt.AlignLeft|Qt.AlignBottom)
+        self.screen_layout.addWidget(self.progressRing, 0, 0, Qt.AlignRight|Qt.AlignBottom)
         self.screen_layout.addWidget(self.text_screen, 0, 0)
         self.screen_layout.addWidget(self.label_cover, 0, 1)
         
@@ -194,8 +194,7 @@ class MangaWidget(QFrame):
         
     def progressring_msg(self, input):
         if input == 'start':
-            self.label_cover.setImage(self.book_icon)
-            self.label_cover.setFixedSize(self.cover_w, self.cover_h)
+            self.progressRing.setValue(0)
             self.progressRing.show()
         elif input == 'end':
             self.progressRing.hide()
@@ -218,6 +217,7 @@ class MangaWidget(QFrame):
     def process_stop(self):
         self.main_thread.terminate()
         self.end_signal.emit('refresh')
+        
         
         
     
