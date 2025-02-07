@@ -18,6 +18,7 @@ from DrissionPage import Chromium, ChromiumOptions
 import tempfile
 
 from .browser import get_browser_path
+from ..configs import READ_CONTENT_TAG
 
 lock = threading.RLock()
 
@@ -35,7 +36,12 @@ class Editer(object):
         self.color_page_name = '彩页'
         self.html_buffer = dict()
 
-        path = r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'  # 请改为你电脑内Chrome可执行文件路径
+        try:
+            # 使用 ChromeDriverManager 自动下载 ChromeDriver
+            path = get_browser_path()
+        except Exception as e:
+            # 请改为你电脑内Chrome可执行文件路径
+            path = r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
         co = ChromiumOptions().set_browser_path(path)
         self.tab = Chromium(co).latest_tab
         
@@ -157,7 +163,7 @@ class Editer(object):
         is_tansfer_rubbish_code = 'woff2' in content_html
         # is_tansfer_rubbish_code = ('font-family: "read"' in content_html)
         bf = BeautifulSoup(content_html, 'html.parser')
-        text_with_head = bf.find('div', {'id': 'TextContent', 'class': 'ads read-content1'}) 
+        text_with_head = bf.find('div', {'id': 'TextContent', 'class': READ_CONTENT_TAG}) 
         
         self.remove_element(text_with_head, id='show-more-images')
         self.remove_element(text_with_head, class_='google-auto-placed ap_container')
@@ -186,7 +192,7 @@ class Editer(object):
                 if text_html[symbol_index-1] != '\n':
                     text_html = text_html[:symbol_index] + '\n' + text_html[symbol_index:]
         
-        text = BeautifulSoup(text_html, 'html.parser').find('div', class_='ads read-content1', id='TextContent')
+        text = BeautifulSoup(text_html, 'html.parser').find('div', class_=READ_CONTENT_TAG, id='TextContent')
    
 
         #删除反爬提示元素
