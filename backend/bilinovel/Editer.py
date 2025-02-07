@@ -17,6 +17,8 @@ from concurrent.futures import ThreadPoolExecutor
 from DrissionPage import Chromium, ChromiumOptions
 import tempfile
 
+from .browser import get_browser_path
+
 lock = threading.RLock()
 
 class Editer(object):
