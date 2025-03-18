@@ -95,7 +95,7 @@ class Editer(object):
         self.book_name = bf.find('meta', {"property": "og:novel:book_name"})['content']
         self.author = bf.find('meta', {"property": "og:novel:author"})['content']
 
-        brief = bf.find('div', {"class": "book-dec Jbook-dec hide"})
+        brief = bf.find('div', {"class": "book-dec Jbook-dec"})
         brief_to_delete = brief.find('div')
         brief_to_delete.extract() if brief_to_delete is not None else 0
         self.brief = brief.find_all('p')[0].text
