@@ -175,7 +175,7 @@ def replace_rubbish_text(content_html):
     if not ps:
         return str(soup)
 
-    for i in range(-1, -10, -1):
+    for i in range(-1, max(-len(ps) - 1, -10), -1):
       last_p = ps[i]
       text = last_p.get_text()
       if text != '':
