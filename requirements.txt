@@ -4,6 +4,5 @@ bs4
 rich
 pyqt5
 PyQt-Fluent-Widgets[full]
-selenium
 pillow-avif-plugin
 DrissionPage
