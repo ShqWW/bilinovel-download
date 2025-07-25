@@ -56,8 +56,25 @@ class Editer(object):
         self.max_thread_num = 8
         self.pool = ThreadPoolExecutor(int(num_thread))
         
-    # 获取html文档内容
-    def get_html(self, url, is_gbk=False):
+    # # 获取html文档内容
+    # def get_html(self, url, is_gbk=False):
+    #     while True:
+    #         self.tab.get(url)
+    #         req = self.tab.html
+    #         while '<title>Access denied | www.linovelib.com used Cloudflare to restrict access</title>' in req:
+    #             print('下载频繁，触发反爬，5秒后重试....')
+    #             time.sleep(5)
+    #             self.tab.get(url)
+    #             req = self.tab.html
+    #         if is_gbk:
+    #             req.encoding = 'GBK'       #这里是网页的编码转换，根据网页的实际需要进行修改，经测试这个编码没有问题
+    #         break
+    #     if self.interval>0:
+    #         time.sleep(self.interval)
+    #     return req
+
+
+    def get_html(self, url, is_gbk=False, is_main_text=False):
         while True:
             self.tab.get(url)
             req = self.tab.html
@@ -69,6 +86,22 @@ class Editer(object):
             if is_gbk:
                 req.encoding = 'GBK'       #这里是网页的编码转换，根据网页的实际需要进行修改，经测试这个编码没有问题
             break
+
+        if is_main_text:
+            bf = BeautifulSoup(req, 'html.parser')
+            p_eles = self.tab.eles('tag:p')
+            for p in p_eles:
+                if p.style(style='display') == 'none':
+                    class_name = p.attr('class')
+                    p_elements_to_remove = bf.find_all('p', class_=class_name)
+                    for p in p_elements_to_remove:
+                        p.decompose()
+            p_tags = bf.find_all('p')
+            for p in p_tags:
+                if 'class' in p.attrs:
+                    del p['class']
+            req = str(bf)
+
         if self.interval>0:
             time.sleep(self.interval)
         return req
@@ -133,7 +166,10 @@ class Editer(object):
         volume_array = self.volume_no - 1
         chap_html = chap_html_list[volume_array]
 
-        self.volume['volume_name'] = chap_html.find('h2', {'class': 'v-line'}).text
+
+        volume_name = chap_html.find('h2', {'class': 'v-line'}).text
+        volume_name = volume_name.replace(self.book_name + ' ', '')
+        self.volume['volume_name'] = volume_name
         chap_list = chap_html.find_all('li', {'class', 'col-4'})
         for chap_html in chap_list:
             self.volume['chap_names'].append(chap_html.text)
@@ -185,7 +221,6 @@ class Editer(object):
                     text_html = text_html[:symbol_index] + '\n' + text_html[symbol_index:]
         
         text = BeautifulSoup(text_html, 'html.parser').find('div', id='TextContent')
-   
 
         #删除反爬提示元素
         match = re.findall(r'<p(\d+)>', str(text))
@@ -227,7 +262,7 @@ class Editer(object):
             else:
                 str_out = f'    正在下载第{page_no}页......'
             print(str_out)
-            content_html = self.get_html(url, is_gbk=False)
+            content_html = self.get_html(url, is_gbk=False, is_main_text=True)
             text = self.get_page_text(content_html)
             text_chap += text
             url_new = url_ori.replace('.html', '_{}.html'.format(page_no+1))[len(self.url_head):]
@@ -335,7 +370,7 @@ class Editer(object):
         return ('javascript' in url or 'cid' in url)   
     
     def get_prev_url(self, chap_no): #获取前一个章节的链接
-        content_html = self.get_html(self.volume['chap_urls'][chap_no], is_gbk=False)
+        content_html = self.get_html(self.volume['chap_urls'][chap_no], is_gbk=False, is_main_text=True)
         next_url = self.url_head + re.search(r'<div class="mlfy_page"><a href="(.*?)">上一页</a>', content_html).group(1)
         return next_url
     
