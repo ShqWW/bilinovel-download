@@ -87,19 +87,32 @@ class Editer(object):
                 req.encoding = 'GBK'       #这里是网页的编码转换，根据网页的实际需要进行修改，经测试这个编码没有问题
             break
 
+
         if is_main_text:
             bf = BeautifulSoup(req, 'html.parser')
             p_eles = self.tab.eles('tag:p')
             for p in p_eles:
                 if p.style(style='display') == 'none':
-                    class_name = p.attr('class')
-                    p_elements_to_remove = bf.find_all('p', class_=class_name)
+                    all_attrs = p.attrs
+                    for key in all_attrs.keys():
+                        if 'data-' in key:
+                            class_key = key
+                            class_value = all_attrs[class_key]
+                    # class_value = p.attr('class')
+                    p_elements_to_remove = bf.find_all('p', {class_key: class_value})
                     for p in p_elements_to_remove:
                         p.decompose()
+
             p_tags = bf.find_all('p')
             for p in p_tags:
-                if 'class' in p.attrs:
-                    del p['class']
+                all_attrs = p.attrs
+                keys_to_delete = []
+                for key in all_attrs.keys():
+                    if 'data-' in key:
+                        keys_to_delete.append(key)
+                for key in keys_to_delete:
+                    del p[key]
+                    
             req = str(bf)
 
         if self.interval>0:
