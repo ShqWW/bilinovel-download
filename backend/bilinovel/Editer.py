@@ -249,7 +249,9 @@ class Editer(object):
             text = text[:-1]
 
         msg = '<br/><br/><br/>————————————以下为告示，读者请无视——————————————<p>'
-        text = text[:text.find(msg)]
+        announcement_index = text.find(msg)
+        if announcement_index != -1:
+            text = text[:announcement_index]
 
         #去除乱码
         if is_tansfer_rubbish_code:
